@@ -1,0 +1,44 @@
+---
+title: "final_project_markdown"
+author: "Eric Lyall"
+date: '2022-03-27'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Downloading files from SRA
+
+First, we have to download the sequences from SRA. 
+
+```{r}
+# using conda to install the sra tools package
+#conda instal -c bioconda sra-tools
+
+# fastq-dump SRR10323947 gets us the first sample
+```
+
+## Downloading the reference genome:
+
+We need to download the reference genome to use as a comparison while searching for mutations. The reference genome can be downloaded from NCBI here: https://www.ncbi.nlm.nih.gov/nuccore/NC_000866
+Following the instructions from the breseq website, we first need to make sure the "show sequence" box is selected, so that we download the sequence as well as the features:
+![Accessing reference genome on GeneBank](GenBank.png)
+At this poit, we can click the "send to" button and download the file as a genebank file (.gb)
+![Accessing reference genome on GeneBank](GenBankDownload.png)
+Using scp, we can trasfer the file over to our cluster: 
+```{r pressure, echo=FALSE}
+#scp sequence.gb elyall_bmeg22@orca1.bcgsc.ca:/home/elyall_bmeg22/final_project/paired
+```
+
+After transferring over the file, we need to check to make sure it contains the sequence as well as the features. This can be done by opening the file, and scrolling until you see a header called "Origin". Under this should be a sequence with nucleotides. 
+
+
+```{r}
+#cat sequence.gb
+
+```
+![Accessing reference genome on GeneBank](view_genebank_file.png)
+
+#Doing quality control, trimmomatic on fastq files: 
