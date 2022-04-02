@@ -17,7 +17,7 @@ First, we have to download the sequences from SRA.
 # using conda to install the sra tools package
 #conda instal -c bioconda sra-tools
 
-# fastq-dump SRR10323947 gets us the first sample
+# fastq-dump SRR10323947 --split-files gets us the last sample
 ```
 
 ## Downloading the reference genome:
@@ -25,7 +25,7 @@ First, we have to download the sequences from SRA.
 We need to download the reference genome to use as a comparison while searching for mutations. The reference genome can be downloaded from NCBI here: https://www.ncbi.nlm.nih.gov/nuccore/NC_000866
 Following the instructions from the breseq website, we first need to make sure the "show sequence" box is selected, so that we download the sequence as well as the features:
 ![Accessing reference genome on GeneBank](GenBank.png)
-At this poit, we can click the "send to" button and download the file as a genebank file (.gb)
+At this point, we can click the "send to" button and download the file as a genebank file (.gb)
 ![Accessing reference genome on GeneBank](GenBankDownload.png)
 Using scp, we can trasfer the file over to our cluster: 
 ```{r pressure, echo=FALSE}
@@ -88,12 +88,133 @@ You can see the tha nextera adapter content is now removed. There are still qual
 ![After cleaning up the adapter content](cleaned_adapters.png)
 
 The next step is to download breseq:
-
 ```{r}
+#conda -c bioconda install breseq
+
+#Actually running it for a single sample:
 # breseq -p -r sequence.gb -o /home/elyall_bmeg22/final_project/paired/trimmed_files/breseq_run/ SRR10323947_1.trim.fastq.gz SRR10323947_2.trim.fastq.gz
 ```
 
+Making a textfile containing all of the SRA names
+```{r}
+#First we have to download the acession list as a txt file form NCBI
+#https://www.ncbi.nlm.nih.gov/sra?term=SRP226618
+
+#creating a .txt file containing all of the SRA #'s for each sample: 
+nano SRA_seqs.txt #We then copy paste all of the SRA #'s names into this file 
+
+```
+
+Now, we are going to generate a pipline that downloads the fastQ files, runs fastQC on each of these, and then runs trimmomatic on each sample. 
+Normaly we would use a job scheduler to do this, but apparently our server can't do this.
+So we will used Dr. De Boer's script which runs a script for each line in an input file
+The scripe is here: (https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/main/Assignment_2/runTheseJobsSerially.sh
+
+```{r}
+#Downloading Carl's script: 
+wget https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/main/Assignment_2/runTheseJobsSerially.sh
+#Getting permissions to run it:
+chmod +x runTheseJobsSerially.sh
+#Creating a pipeline called down_trim_pipeline.sh that downloads files from NCBI, runs fastQC and then runs trimmomatic on them. 
+
+#First we make the name of the pipeline: 
+nano down_trim_pipeline.sh
+
+#Then we get permission on it
+chmod +x down_trim_pipeline.sh
+#Then we rune it!
+./runTheseJobsSerially.sh ./pipelines/down_trim_pipeline.sh SRA_seqs.txt
+
+#Then, we start adding to it!
 
 
+#!/bin/bash
+set -e # this makes the whole script exit on any error.
+sample=$1
+mkdir -p fastq_samples # making a directory to add the fastq files
+mkdir -p fastqc_files #making a directory for fastqc_files
+mkdir -p downtrim_logfiles
+#Now, going to run the pipeline: 
 
+echo running pipeline for $sample
+if [ ! -e downtrim_logfiles/$sample.fastq.done ] 
+then
+        echo Downloading $sample
+        #Command download sample:
+        fastq-dump $sample --split-files --outdir fastq_samples/
+        touch downtrim_logfiles/$sample.fastq.done #add a flag to say fastq downloaded.
+else
+        echo Already performed fastqc of $sample
+        fi
+if [ -e downtrim_logfiles/$sample.fastq.done ] #if the fastq is done,do fastqc
+then
+        echo Running fastqc with $sample
+        mkdir fastqc_files/$sample
+        fastqc $fastq_samples/{sample}_1.fastq --outdir fastqc_files/$sample/
+        fastqc $fastq_samples/{sample}_2.fastq --outdir fastqc_files/$sample/
+        touch downtrim_logfiles/$sample.fastqc.done
+else
+        echo: FastQC was not made sucessfully.
+        fi
+
+```
+
+Next, we can make sure all the fastq files are gzipped before running trimmomatic:
+```{r}
+#gzip fastq_samples/*.fastq
+
+#Making the name of the trimmomatic pipeline:
+nano pipelines/trimmomatic.sh
+chmod +x trimmomatic.sh
+
+#running the pipeline: 
+
+        
+
+```
+
+Now making a pipeline to trim all the samples: 
+```{r}
+#!/bin/bash
+set -e # this makes the whole script exit on any error.
+sample=$1
+mkdir -p trimmomatic_files
+if [ ! -e downtrim_logfiles/$sample.trim.done ]
+then
+        mkdir trimmomatic_files/$sample
+        #trimmomatic PE $fastq_samples/${sample}_1.fastq.gz fastq_samples/${sample}_2.fastq.gz trimmomatic_files/$sample/${sample}_1.trim.fastq.gz trimmomatic_files/$sample/${sample}_1un.trim.fastq.gz trimmomatic_files/$sample/${sample}_2.trim.fastq.gz trimmomatic_files/$sample/${sample}_2un.trim.fastq.gz SLIDINGWINDOW:4:15 MINLEN:25 LEADING:3 TRAILING:3 ILLUMINACLIP:NexteraPE-PE.fa:2:40:15
+
+        touch downtrim_logfiles/$sample.trimmed.done
+else
+        echo:trimmomatic failed
+        fi
+```
+
+SRR10323947_1.fastq.gz
+SRR10323947_1.fastq.gz
+
+
+```{r}
+#Now we make a pipeline to run breseq:
+nano pipelines/breseq_pipe.sh
+chmox +x breseq_pipe.sh
+#The pipeline starts below: 
+
+#!/bin/bash
+set -e # this makes the whole script exit on any error.
+sample=$1
+mkdir -p breseq_files
+if [ -e downtrim_logfiles/$sample.trimmmed.done ]
+then
+        #Going to run breseq on it
+        mkdir -p breseq_files/$sample
+        #Running the breseq command:
+        # breseq -p -r sequence.gb -o /home/elyall_bmeg22/final_project/breseq_files/$sample/ trimmomatic_files/$sample/${sample}_1.trim.fastq.gz trimmomatic_files/$sample/${sample}_2.trim.fastq.gz
+        touch downtrim_logfiles/$sample.breseq.done
+else
+        echo:breseq failed
+        fin
+
+    
+```
 
