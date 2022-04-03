@@ -1,0 +1,4 @@
+Sun Apr  3 02:19:50 2022
+
+breseq -p -r sequence.gb SRR10323960_1.trim.fastq.gz SRR10323960_2.trim.fastq.gz
+
