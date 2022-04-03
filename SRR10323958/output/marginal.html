@@ -1,0 +1,297 @@
+<!DOCTYPE html
+PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<html>
+<head>
+<title>BRESEQ :: Marginal Predictions</title>
+<style type = "text/css">
+body {font-family: sans-serif; font-size: 11pt;}
+th {background-color: rgb(0,0,0); color: rgb(255,255,255);}
+table {background-color: rgb(1,0,0); color: rgb(0,0,0);}
+tr {background-color: rgb(255,255,255);}
+.mutation_in_codon {color:red; text-decoration : underline;}
+.snp_type_synonymous{color:green;}
+.snp_type_nonsynonymous{color:blue;}
+.snp_type_nonsense{color:red;}
+.mutation_header_row {background-color: rgb(0,130,0);}
+.read_alignment_header_row {background-color: rgb(255,0,0);}
+.missing_coverage_header_row {background-color: rgb(0,100,100);}
+.new_junction_header_row {background-color: rgb(0,0,155);}
+.copy_number_header_row {background-color: rgb(153,102,0);}
+.alternate_table_row_0 {background-color: rgb(255,255,255);}
+.alternate_table_row_1 {background-color: rgb(235,235,235);}
+.gray_table_row {background-color: rgb(230,230,245);}
+.polymorphism_table_row {background-color: rgb(160,255,160);}
+.highlight_table_row {background-color: rgb(192,255,255);}
+.reject_table_row {background-color: rgb(255,200,165);}
+.user_defined_table_row {background-color: rgb(255,255,0);}
+.information_table_row {background-color: rgb(200,255,255);}
+.junction_repeat {background-color: rgb(255,165,0)}
+.junction_gene {}
+.hidden { display: none; }
+.unhidden { display: block; }
+
+</style>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<script type="text/javascript">
+  function hideTog(divID) {
+    var item = document.getElementById(divID);
+    if (item) {
+      item.className=(item.className=='hidden')?'unhidden':'hidden';
+    }
+  }
+  function showTog(butID) {
+    var button = document.getElementById(butID);
+    if (button) {
+      button.value=(button.value=='Show')?'Hide':'Show';
+    }
+  }
+</script>
+
+</head>
+<body>
+<table width="100%" border="0" cellspacing="0" cellpadding="3">
+<tr>
+<td><a href="http://barricklab.org/breseq"><img src="evidence/breseq_small.png" /></a></td>
+<td width="100%">
+<b><i>breseq</i></b>&nbsp;&nbsp;version 0.36.1&nbsp;&nbsp;
+<br><a href="index.html">mutation predictions</a> | 
+<a href="marginal.html">marginal predictions</a> | 
+<a href="summary.html">summary statistics</a> | 
+<a href="output.gd">genome diff</a> | 
+<a href="log.txt">command line log</a>
+</td></tr></table>
+
+<p>
+<p>
+<table border="0" cellspacing="1" cellpadding="3">
+<tr><th colspan="12" align="left" class="new_junction_header_row">Marginal new junction evidence (lowest skew 10 of 12 shown)</th></tr>
+<!-- Header Lines for New Junction -->
+<tr>
+<th colspan="2">&nbsp;</th>
+<th>seq&nbsp;id</th>
+<th>position</th>
+<th>reads&nbsp;(cov)</th>
+<th>reads&nbsp;(cov)</th>
+<th>score</th>
+<th>skew</th>
+<th>freq</th>
+<th>annotation</th>
+<th>gene</th>
+<th width="100%">product</th>
+</tr>
+
+<!-- Item Lines for New Junction -->
+<!-- Side 1 Item Lines for New Junction -->
+<tr class="mutation_table_row_0">
+<td rowspan="2"><a href="evidence/JC_465.html">*</a></td>
+<td rowspan="1"><a href="evidence/JC_SIDE_1_465.html">?</a></td>
+<td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">167726&nbsp;=</td><td align="center" class="junction_gene">1790 (1.070)</td><td rowspan="2" align="center">7 (0.000)</td>
+<td rowspan="2" align="center">7/232</td>
+<td rowspan="2" align="center">NT</td>
+<td rowspan="2" align="center">0.44%</td>
+<td align="center" class="junction_gene">intergenic&nbsp;(&#8209;66/+17)</td>
+<td align="center" class="junction_gene"><i>denB/denB.1</i></td>
+<td class="junction_gene">DenB DNA endonuclease IV/DenB.1 hypothetical protein</td>
+</tr>
+<!-- Side 2 Item Lines for New Junction -->
+<tr class="mutation_table_row_0">
+<td rowspan="1"><a href="evidence/JC_SIDE_2_465.html">?</a></td><td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">=&nbsp;167954</td>
+<td align="center" class="junction_gene">1504 (0.970)</td><td align="center" class="junction_gene">intergenic&nbsp;(&#8209;17/+11)</td>
+<td align="center" class="junction_gene"><i>denB.1/rIIB</i></td>
+<td class="junction_gene">DenB.1 hypothetical protein/helix&#8209;turn&#8209;helix domain&#8209;containing protein</td>
+</tr>
+<!-- Side 1 Item Lines for New Junction -->
+<tr class="mutation_table_row_1">
+<td rowspan="2"><a href="evidence/JC_464.html">*</a></td>
+<td rowspan="1"><a href="evidence/JC_SIDE_1_464.html">?</a></td>
+<td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">155596&nbsp;=</td><td align="center" class="junction_gene">1296 (0.770)</td><td rowspan="2" align="center">5 (0.000)</td>
+<td rowspan="2" align="center">4/248</td>
+<td rowspan="2" align="center">NT</td>
+<td rowspan="2" align="center">0.39%</td>
+<td align="center" class="junction_gene">coding&nbsp;(910/1119&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>35</i></td>
+<td class="junction_gene">gp35 hinge connector of long tail fiber, proximal connector</td>
+</tr>
+<!-- Side 2 Item Lines for New Junction -->
+<tr class="mutation_table_row_1">
+<td rowspan="1"><a href="evidence/JC_SIDE_2_464.html">?</a></td><td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">155604&nbsp;=</td>
+<td align="center" class="junction_gene">1283 (0.780)</td><td align="center" class="junction_gene">coding&nbsp;(918/1119&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>35</i></td>
+<td class="junction_gene">gp35 hinge connector of long tail fiber, proximal connector</td>
+</tr>
+<!-- Side 1 Item Lines for New Junction -->
+<tr class="mutation_table_row_0">
+<td rowspan="2"><a href="evidence/JC_463.html">*</a></td>
+<td rowspan="1"><a href="evidence/JC_SIDE_1_463.html">?</a></td>
+<td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">148201&nbsp;=</td><td align="center" class="junction_gene">2438 (1.450)</td><td rowspan="2" align="center">3 (0.000)</td>
+<td rowspan="2" align="center">3/244</td>
+<td rowspan="2" align="center">NT</td>
+<td rowspan="2" align="center">0.12%</td>
+<td align="center" class="junction_gene">coding&nbsp;(341/633&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>SegG</i></td>
+<td class="junction_gene">SegG homing endonuclease</td>
+</tr>
+<!-- Side 2 Item Lines for New Junction -->
+<tr class="mutation_table_row_0">
+<td rowspan="1"><a href="evidence/JC_SIDE_2_463.html">?</a></td><td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">148326&nbsp;=</td>
+<td align="center" class="junction_gene">2823 (1.740)</td><td align="center" class="junction_gene">coding&nbsp;(216/633&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>SegG</i></td>
+<td class="junction_gene">SegG homing endonuclease</td>
+</tr>
+<!-- Side 1 Item Lines for New Junction -->
+<tr class="mutation_table_row_1">
+<td rowspan="2"><a href="evidence/JC_462.html">*</a></td>
+<td rowspan="1"><a href="evidence/JC_SIDE_1_462.html">?</a></td>
+<td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">146334&nbsp;=</td><td align="center" class="junction_gene">1370 (0.820)</td><td rowspan="2" align="center">27 (0.020)</td>
+<td rowspan="2" align="center">22/240</td>
+<td rowspan="2" align="center">NT</td>
+<td rowspan="2" align="center">2.1%</td>
+<td align="center" class="junction_gene">coding&nbsp;(196/387&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>frd.2</i></td>
+<td class="junction_gene">Frd.2 conserved hypothetical protein</td>
+</tr>
+<!-- Side 2 Item Lines for New Junction -->
+<tr class="mutation_table_row_1">
+<td rowspan="1"><a href="evidence/JC_SIDE_2_462.html">?</a></td><td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">=&nbsp;146330</td>
+<td align="center" class="junction_gene">1248 (0.780)</td><td align="center" class="junction_gene">coding&nbsp;(200/387&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>frd.2</i></td>
+<td class="junction_gene">Frd.2 conserved hypothetical protein</td>
+</tr>
+<!-- Side 1 Item Lines for New Junction -->
+<tr class="mutation_table_row_0">
+<td rowspan="2"><a href="evidence/JC_461.html">*</a></td>
+<td rowspan="1"><a href="evidence/JC_SIDE_1_461.html">?</a></td>
+<td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">=&nbsp;136137</td><td align="center" class="junction_gene">1764 (1.050)</td><td rowspan="2" align="center">79 (0.050)</td>
+<td rowspan="2" align="center">42/252</td>
+<td rowspan="2" align="center">NT</td>
+<td rowspan="2" align="center">4.4%</td>
+<td align="center" class="junction_gene">coding&nbsp;(139/504&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>alc</i></td>
+<td class="junction_gene">Alc inhibitor of host transcription</td>
+</tr>
+<!-- Side 2 Item Lines for New Junction -->
+<tr class="mutation_table_row_0">
+<td rowspan="1"><a href="evidence/JC_SIDE_2_461.html">?</a></td><td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">136148&nbsp;=</td>
+<td align="center" class="junction_gene">1664 (0.990)</td><td align="center" class="junction_gene">coding&nbsp;(128/504&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>alc</i></td>
+<td class="junction_gene">Alc inhibitor of host transcription</td>
+</tr>
+<!-- Side 1 Item Lines for New Junction -->
+<tr class="mutation_table_row_1">
+<td rowspan="2"><a href="evidence/JC_460.html">*</a></td>
+<td rowspan="1"><a href="evidence/JC_SIDE_1_460.html">?</a></td>
+<td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">=&nbsp;135605</td><td align="center" class="junction_gene">2027 (1.210)</td><td rowspan="2" align="center">5 (0.000)</td>
+<td rowspan="2" align="center">5/246</td>
+<td rowspan="2" align="center">NT</td>
+<td rowspan="2" align="center">0.24%</td>
+<td align="center" class="junction_gene">coding&nbsp;(177/354&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>pseT.3</i></td>
+<td class="junction_gene">PseT.3 conserved hypothetical predicted membrane protein</td>
+</tr>
+<!-- Side 2 Item Lines for New Junction -->
+<tr class="mutation_table_row_1">
+<td rowspan="1"><a href="evidence/JC_SIDE_2_460.html">?</a></td><td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">=&nbsp;135617</td>
+<td align="center" class="junction_gene">2233 (1.360)</td><td align="center" class="junction_gene">coding&nbsp;(165/354&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>pseT.3</i></td>
+<td class="junction_gene">PseT.3 conserved hypothetical predicted membrane protein</td>
+</tr>
+<!-- Side 1 Item Lines for New Junction -->
+<tr class="mutation_table_row_0">
+<td rowspan="2"><a href="evidence/JC_459.html">*</a></td>
+<td rowspan="1"><a href="evidence/JC_SIDE_1_459.html">?</a></td>
+<td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">131170&nbsp;=</td><td align="center" class="junction_gene">1390 (0.830)</td><td rowspan="2" align="center">19 (0.010)</td>
+<td rowspan="2" align="center">13/238</td>
+<td rowspan="2" align="center">NT</td>
+<td rowspan="2" align="center">1.5%</td>
+<td align="center" class="junction_gene">intergenic&nbsp;(&#8209;137/+11)</td>
+<td align="center" class="junction_gene"><i>rIII/31</i></td>
+<td class="junction_gene">rIII lysis inhibition accessory protein, rapid lysis phenotype/co&#8209;chaperone GroES family protein</td>
+</tr>
+<!-- Side 2 Item Lines for New Junction -->
+<tr class="mutation_table_row_0">
+<td rowspan="1"><a href="evidence/JC_SIDE_2_459.html">?</a></td><td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">=&nbsp;131166</td>
+<td align="center" class="junction_gene">1264 (0.800)</td><td align="center" class="junction_gene">intergenic&nbsp;(&#8209;133/+15)</td>
+<td align="center" class="junction_gene"><i>rIII/31</i></td>
+<td class="junction_gene">rIII lysis inhibition accessory protein, rapid lysis phenotype/co&#8209;chaperone GroES family protein</td>
+</tr>
+<!-- Side 1 Item Lines for New Junction -->
+<tr class="mutation_table_row_1">
+<td rowspan="2"><a href="evidence/JC_456.html">*</a></td>
+<td rowspan="1"><a href="evidence/JC_SIDE_1_456.html">?</a></td>
+<td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">93311&nbsp;=</td><td align="center" class="junction_gene">1458 (0.870)</td><td rowspan="2" align="center">4 (0.000)</td>
+<td rowspan="2" align="center">3/238</td>
+<td rowspan="2" align="center">NT</td>
+<td rowspan="2" align="center">0.24%</td>
+<td align="center" class="junction_gene">coding&nbsp;(1183/1464&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>wac</i></td>
+<td class="junction_gene">neck protein fibritin</td>
+</tr>
+<!-- Side 2 Item Lines for New Junction -->
+<tr class="mutation_table_row_1">
+<td rowspan="1"><a href="evidence/JC_SIDE_2_456.html">?</a></td><td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">=&nbsp;93526</td>
+<td align="center" class="junction_gene">1881 (1.190)</td><td align="center" class="junction_gene">coding&nbsp;(1398/1464&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>wac</i></td>
+<td class="junction_gene">neck protein fibritin</td>
+</tr>
+<!-- Side 1 Item Lines for New Junction -->
+<tr class="mutation_table_row_0">
+<td rowspan="2"><a href="evidence/JC_455.html">*</a></td>
+<td rowspan="1"><a href="evidence/JC_SIDE_1_455.html">?</a></td>
+<td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">=&nbsp;88257</td><td align="center" class="junction_gene">1852 (1.100)</td><td rowspan="2" align="center">4 (0.000)</td>
+<td rowspan="2" align="center">4/252</td>
+<td rowspan="2" align="center">NT</td>
+<td rowspan="2" align="center">0.22%</td>
+<td align="center" class="junction_gene">coding&nbsp;(173/1809&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>10</i></td>
+<td class="junction_gene">tail protein</td>
+</tr>
+<!-- Side 2 Item Lines for New Junction -->
+<tr class="mutation_table_row_0">
+<td rowspan="1"><a href="evidence/JC_SIDE_2_455.html">?</a></td><td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">=&nbsp;88266</td>
+<td align="center" class="junction_gene">1755 (1.040)</td><td align="center" class="junction_gene">coding&nbsp;(182/1809&nbsp;nt)</td>
+<td align="center" class="junction_gene"><i>10</i></td>
+<td class="junction_gene">tail protein</td>
+</tr>
+<!-- Side 1 Item Lines for New Junction -->
+<tr class="mutation_table_row_1">
+<td rowspan="2"><a href="evidence/JC_454.html">*</a></td>
+<td rowspan="1"><a href="evidence/JC_SIDE_1_454.html">?</a></td>
+<td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">=&nbsp;65799</td><td align="center" class="junction_gene">2069 (1.230)</td><td rowspan="2" align="center">37 (0.020)</td>
+<td rowspan="2" align="center">26/240</td>
+<td rowspan="2" align="center">NT</td>
+<td rowspan="2" align="center">2.2%</td>
+<td align="center" class="junction_gene">intergenic&nbsp;(&#8209;81/+35)</td>
+<td align="center" class="junction_gene"><i>ipII/ipIII</i></td>
+<td class="junction_gene">IpII internal head protein/IpIII internal head protein</td>
+</tr>
+<!-- Side 2 Item Lines for New Junction -->
+<tr class="mutation_table_row_1">
+<td rowspan="1"><a href="evidence/JC_SIDE_2_454.html">?</a></td><td rowspan="1" class="junction_gene">NC_000866</td>
+<td align="center" class="junction_gene">66499&nbsp;=</td>
+<td align="center" class="junction_gene">1275 (0.800)</td><td align="center" class="junction_gene">intergenic&nbsp;(&#8209;84/+4)</td>
+<td align="center" class="junction_gene"><i>ipIII/e</i></td>
+<td class="junction_gene">IpIII internal head protein/glycoside hydrolase family protein</td>
+</tr>
+</table>
+</body></html>
