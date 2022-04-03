@@ -1,0 +1,14 @@
+{
+  "NC_000866": {
+    "average": 1268.752,
+    "deletion_coverage_propagation_cutoff": 295.0,
+    "deletion_coverage_seed_cutoff": 0.0,
+    "dispersion": 145.0228,
+    "nbinom_dispersion": 112.394852330684,
+    "nbinom_mean_parameter": 1220.921,
+    "nbinom_prob_parameter": 0.00889720462515341,
+    "nbinom_size_parameter": 10.9603,
+    "nbinom_variance": 137225.235502432,
+    "variance": 183998.0
+  }
+}
