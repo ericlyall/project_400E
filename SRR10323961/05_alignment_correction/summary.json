@@ -1,0 +1,60 @@
+{
+  "accepted_pos_hash_score_distribution": {
+    "105": 1,
+    "106": 1,
+    "11": 1,
+    "13": 1,
+    "130": 1,
+    "151": 1,
+    "26": 1,
+    "3": 6,
+    "32": 1,
+    "33": 1,
+    "38": 1,
+    "4": 3,
+    "46": 1,
+    "5": 1,
+    "52": 1,
+    "57": 1,
+    "58": 1,
+    "6": 1,
+    "63": 1,
+    "66": 1,
+    "68": 1,
+    "69": 1,
+    "7": 3,
+    "73": 1,
+    "77": 1,
+    "83": 1,
+    "89": 1,
+    "94": 1
+  },
+  "max_sam_base_quality_score": 0,
+  "observed_pos_hash_score_distribution": null,
+  "read_file": {
+    "SRR10323961_1.trim": {
+      "num_total_bases": 134108668,
+      "num_total_reads": 970866,
+      "num_unmatched_bases": 4380313,
+      "num_unmatched_reads": 36763
+    },
+    "SRR10323961_2.trim": {
+      "num_total_bases": 128975792,
+      "num_total_reads": 968529,
+      "num_unmatched_bases": 72432185,
+      "num_unmatched_reads": 547553
+    }
+  },
+  "reference": [
+    {
+      "bases_mapped_to_reference": 182556378.0,
+      "reads_mapped_to_reference": 1334451.0
+    }
+  ],
+  "total_bases": 263084460,
+  "total_bases_mapped_to_references": 182556378,
+  "total_reads": 1939395,
+  "total_reads_mapped_to_references": 1334451,
+  "total_unmatched_bases": 76812498,
+  "total_unmatched_reads": 584316
+}
