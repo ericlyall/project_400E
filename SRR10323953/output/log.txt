@@ -1,0 +1,4 @@
+Sat Apr  2 14:23:53 2022
+
+breseq -p -r sequence.gb -o /home/elyall_bmeg22/final_project/breseq_files/SRR10323953/ trimmomatic_files/SRR10323953/SRR10323953_1.trim.fastq.gz trimmomatic_files/SRR10323953/SRR10323953_2.trim.fastq.gz
+
