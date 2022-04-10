@@ -9,13 +9,17 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#Introdution (Eric is writing this)
+blah blah phage mutations & stuff
+
+
 ## Downloading files from SRA
 
 First, we have to download the sequences from SRA. 
 
 ```{r}
 # using conda to install the sra tools package
-#conda instal -c bioconda sra-tools
+#conda install -c bioconda sra-tools
 
 # fastq-dump SRR10323947 --split-files gets us the last sample
 ```
@@ -197,14 +201,17 @@ SRR10323947_1.fastq.gz
 ```{r}
 #Now we make a pipeline to run breseq:
 nano pipelines/breseq_pipe.sh
-chmox +x breseq_pipe.sh
+chmod +x breseq_pipe.sh
+#Anddd running the pipeline
+./runTheseJobsSerially.sh ./pipelines/breseq_pipe.sh SRA_seqs.txt
+
 #The pipeline starts below: 
 
 #!/bin/bash
 set -e # this makes the whole script exit on any error.
 sample=$1
 mkdir -p breseq_files
-if [ -e downtrim_logfiles/$sample.trimmmed.done ]
+if [ -e downtrim_logfiles/$sample.trimmed.done ]
 then
         #Going to run breseq on it
         mkdir -p breseq_files/$sample
@@ -213,8 +220,282 @@ then
         touch downtrim_logfiles/$sample.breseq.done
 else
         echo:breseq failed
-        fin
-
-    
+        fi
 ```
 
+```{r}
+#Writing a standa-alonE breseq: 
+#Using sample SRR10323958
+
+# breseq -p -r sequence.gb -o /home/elyall_bmeg22/final_project/T2breseq_files/SRR10323958/ trimmomatic_files/SRR10323958/SRR10323958_1.trim.fastq.gz trimmomatic_files/SRR10323958/SRR10323958_2.trim.fastq.gz
+```
+
+#breseq mutation calling has finished!
+Typically at this point we would run a single line of breseq code that would filter all the mutations we found against the ancestral sequence.
+
+However, the author's didn't actually share the data for the ancestral sample, which is supposed to be compared against the experimental sample, and have common mutations filtered out. 
+This is a bit of an issue for us- keeping all of these mutations in, most of which are from the ancestor, makes it difficult compare data against the paper, and focus on the mutations which are important. 
+As a proxy for filtering against the ancestral sequence, we are going to filter against the final list of mutations the authors have provided in their supplementary table. 
+
+We discussed these changes with Carl and he said we would not lose difficultly score points here. 
+
+
+Defining which sample is what- this is what Eric has found so far:  
+SRR 61 = 55D18R1
+SRR 60 = 55D18R2
+SRR 59 = CD18R1
+SRR 58 =CD18R2
+SRR 57 = CD18R3
+SRR 56 = CD18R4
+SRR 55 = CD18R5
+SRR 54 = 55D18R3
+SRR 53 = JAKE FIND THIS
+SRR 52 = JAKE FIND THIS
+SRR 51 = JAKE FIND THIS
+SRR 50 = JAKE FIND THIS
+SRR 49 = JAKE FIND THIS
+SRR 48 = 55CD18R4
+SRR 47 = 55CD18R5
+
+
+#Annotating our mutations & filtering against the supplementary table: (done)
+To get more detail on our mutation, we can used the ANNOTATE function from breseq.
+This creates an annotated file that adds detail to each mutation found, including the type (e.g SNP), and whether is synonymous or non-synonymous.
+```{r}
+ 
+#gdtools ANNOTATE -o annotated_all.tsv -f TSV -r reference_seq.gb 47_output.gd 48_output.gd 49_output.gd 50_output.gd 51_output.gd 52_output.gd 53_output.gd 54_output.gd 55_output.gd 56_output.gd 57_output.gd 58_output.gd 59_output.gd 60_output.gd 61_output.gd
+
+#Uploading annotated mutations from a tsv file:: 
+all_ann <- as.data.frame(read.table (file = 'annotated_all.tsv', sep = '\t', header = TRUE))
+
+#loading up the supplementary table: 
+library(openxlsx)
+mutation_xl <- read.xlsx("Supplementary table 2a & 2b.xlsx",sheet = 1)
+mutation_df <- as.data.frame(mutation_xl)
+
+#Filtering out the mutation in all_ann that are not in the supplementary files. This is our stand-in for not having the ancestral sequence. 
+library(tidyverse)
+filtered_all_ann <- filter(all_ann, position %in% mutation_df$position )
+nrow(filtered_all_ann)
+```
+
+In total we have 192 surviving mutations, compared to the 174 reported in the paper. This means our analysis is largely successful!
+
+This is much better than what we had before filtering, which was 3197 mutations (most of which are probably from the ancestor)
+
+This means many of the mutations were shared between our data and the paper's data. 
+We may have more mutations because the there could be mutations that we have (ancestral or otherwise) which share the same position. As we have no way of 
+distinguishing these, we will leave them in for our analysis
+
+
+#Finding the number of unique mutations: (unfinished)- Jake try this if you want, but it's a lower priority
+```{r}
+
+#Jake you can try this if you want. If you can somehow do the above filtering on a gd file directly, you can then do gdtools COMPARE, grab the html file and work from there. I'm not great at filtering shit in bash
+#ONce you got the compare file use the code below. Alternatively, you can just hack at the filtered_all_ann dataframe & look for isolated mutations. Be careful thoug- sometimes there can be two types or mutations at a position.  
+sub_mutation_df <- mutation_df[c(3:17)]
+#Now we can transpose the dataframe: 
+trans_sub_mut_df <- data.frame(t(sub_mutation_df))
+#Now we can count the number of columns with only one element (representing only one sample with a mutation) in that row:
+trans_cols <- colnames(trans_sub_mut_df)
+unique_mutations <- 0
+for(name_of_col in trans_cols)
+{
+        if((15-sum(is.na(trans_sub_mut_df[name_of_col])))== 1){
+                unique_mutations <- unique_mutations +1
+        }
+        
+}
+
+#Finding percentage of mutations that are unique to a specific population:
+
+```
+
+
+#Annotating our mutation list with functional gene categories (done)
+Now we are going to further annotate our mutation list with the gene functional categories. The authors of this paper took functional gene categories from a paper by Miller et al. We've downloaded these functional gene categories and will used them for annotation.
+```{r}
+#Adding a column with functional categories.
+
+#First we have to upload each functional category and their associated genes. These designations are taken from the a paper by Miller et al, which was used in this study. 
+
+library(openxlsx)
+func_des <- read.xlsx("Supplementary table 2a & 2b.xlsx",sheet = 'melt_cat_genes')
+func_des_df <- as.data.frame(func_des)
+
+#Now, we can annotate all of our mutation with their matching functional designation. 
+#If no functional designation is found, we will label it as unknown
+
+#we are going to filter through each gene, and assign a gene designation to it:
+all_genes <- filtered_all_ann$gene_name
+all_genes_func <- c()
+for(gene in all_genes)
+{
+        r <- which(func_des_df$gene == gene)
+        if(length(r)==0){
+                all_genes_func <- c(all_genes_func,"unknown")
+        }
+        else{
+                all_genes_func <- c(all_genes_func,func_des_df$function_cat[r])
+        }
+                
+}
+
+#Adding the vector containing all the gene functional designations to our datframe
+filtered_all_ann$gene_function <- all_genes_func
+```
+
+
+#Calculating mutations per functional category: (done)
+Now we can start looking at mutations as thy relate to functional categories: 
+
+```{r}
+#Finding the number of mutations per functional category:
+library(tibble)
+mut_per_func <- filtered_all_ann %>% group_by(gene_function) %>% summarise(n=n()) %>% arrange(desc(n))
+library(ggplot2)
+ggplot(mut_per_func, aes(x="",y=n,fill = gene_function))+ geom_bar(width = 1, stat = "identity")
+
+
+#Finding the number of higher-frequency mutations (greater than 50%) per functional category:
+high_freq <- filtered_all_ann %>% filter(frequency > .5)
+high_f_mut_func <- high_freq %>% group_by(gene_function) %>% summarise(n=n()) %>% arrange(desc(n))
+ggplot(high_f_mut_func, aes(x="",y=n,fill = gene_function))+ geom_bar(width = 1, stat = "identity")
+
+
+```
+
+#Comparing mutations by type (unfinished) Jake do this
+```{r}
+#JAKE DO THIS!!
+
+#Getting the total number of mutations
+
+nrow(filtered_all_ann)
+#There are 190 mutations in total
+
+#Breaking down the type of mutations by category: % of intergenic mutations, % of indel mutations, % of SNP mutations, % of xNP's
+
+#Showing this in a pi chart
+
+#Looking at specifically the SNP mutations to find out how many are synonymous, and how many are non-synonymous, and how many are integenic
+
+#Show this in a pi chart
+
+```
+
+
+#Calculating relative mutation rates (in progress)
+
+The next task is to compare the relative mutation rates across each functional category. A mutation rate is defined as the # of mutations / size of functional category (in BP). 
+The paper used functional catagories taken from the 2003 Miller et al. paper
+We downloaded a list of T4 genes, and a list of the genes in each functional catagory from Miller's paper. 
+
+We first need to find the size of each functional category in base pairs. This size will allow us to calculate the mutation rate. 
+```{r}
+
+#Downloading the a list of T4 genes and their sizes from the Miller et al. paper into a dataframe
+t4_genes <- read.xlsx("Supplementary table 2a & 2b.xlsx",sheet = 'T4_genes')
+
+#we are going to add a new column to the dataframe func_des_df that containes the gene length. 
+#Some genes have multipl exons- in this case we will add them up
+gene_length <- c()
+
+#Iterating through all of the genes in our functionl categoreis from Miller et al.
+for(gene in func_des_df$gene){
+        r <- which(t4_genes$gene == gene) #getting a list of rows with the gene name
+        #If the gene isn't found, append a length of zero and print the gene for a manual check to see if it truly does not exist
+        if(length(r)==0){ 
+                gene_length <- c(gene_length,0)
+                print("Gene not found")
+                print(gene)
+        }
+        else{ #If the gene is found
+                #There may be multiple gene exons with the same name, will add lengths
+                len <- 0
+                for(i in r){
+                       len <- len + t4_genes$length[i] 
+                }
+                gene_length <- c(gene_length,len) #Append the total gene length to vector
+        }
+}
+#Adding this vector to the functional designation dataframe
+func_des_df$gene_length <- gene_length 
+
+```
+
+
+Now we can get the mutation rate for each sample across each functional category. This will allow us to preform an anova to find the effect of functional category and sample population (E.coli C, E.coli K12, alternating) of the mutation rate
+
+#Jake- we need to make this into a function and run it on all mutations, synonymous mutations (SNP's only), and non-synonymous (SNP's only)
+
+```{r}
+#We will start by making a dataframe where each column is a fucntional category, each row is a sample and values are # of mutations: 
+
+#Creating an empty dataframe no # mutations per functional category. 
+n_mut_per_fcn_cat_df <- data.frame(matrix(ncol = 12, nrow = 15)) 
+
+#Assigning each functional category to the column names
+colnames(n_mut_per_fcn_cat_df) <- c(unique(func_des_df$function_cat),"unknown")
+
+#Assinging each sample to the rownames: 
+rownames(n_mut_per_fcn_cat_df) <- c(unique(name_gene_fcn_df$title))
+
+#Filling this dataframe with 0's as a default:
+n_mut_per_fcn_cat_df[is.na(n_mut_per_fcn_cat_df)] <- 0
+
+#We only need to work with sample names & gene functions here, so we can remove the other columns:
+name_gene_fcn_df <- filtered_all_ann[c("title","gene_function")]
+
+#Getting a summary of the # of mutations per each functional category in our experiment
+fcn_breakdown <- name_gene_fcn_df  %>% group_by(title,gene_function) %>% summarise(n=n())
+
+#Adding this data into the n_mut_per_fcn_cat_df
+for(r in 1:nrow(fcn_breakdown)){
+        n_mut_per_fcn_cat_df[fcn_breakdown$title[r],fcn_breakdown$gene_function[r]] <- fcn_breakdown$n[r]
+}
+
+#Then, we will normalize each column to the number of nucleotides in each functional category: 
+
+#Getting a list of the category names: 
+cat_names <- colnames(n_mut_per_fcn_cat_df)
+
+#For every category name, find the length of the functional category in base pairs. Then will will divide the sample mutations in a category by this number to get the "mutation rate" (# of mutation in a category / size of category in BP)
+
+for(cat in cat_names){
+        n_mut_per_fcn_cat_df[cat] <- n_mut_per_fcn_cat_df[cat]/ sum((func_des_df %>% filter(function_cat == cat))$gene_length)
+}
+
+#We are going to discard the unknown mutation columns from our analysis, because we can't normalize this data to find a mutation rate( the number of unknown genes is , unsurprisingly, unknown)
+n_mut_per_fcn_cat_df <- select(n_mut_per_fcn_cat_df,-unknown)
+
+#Now running the ANOVA
+#install.packages('rcompanion)
+library(rcompanion)
+
+#help("scheirerRayHare")
+#we need to run one of thises
+
+
+```
+
+Now we have a dataframe containing mutations rates for each functional category as a column with samples as each rows. 
+We will then do a ANOVA to determine which the effect of sample population (whether the sample evolved with Ecoli C, K12, or mixed), functional category or the interaction between the two on the mutation rate. 
+The paper used an SRH nono-parametric two-way ANOVA for this analysis, as the data is not normally distributed. 
+```{r}
+
+
+
+```
+
+
+#Plotting mutations across the genome: Jake Do this
+Our last task will be to graph the mutations for each sample across then entire genome length. This will tell us if there's any similarity between samples, and we can also compare against the original figure here. 
+```{r}
+
+
+```
+
+
+
+#Conclusion:
