@@ -373,6 +373,8 @@ ggplot(high_f_mut_func, aes(x="",y=n,fill = gene_function))+ geom_bar(width = 1,
 
 nrow(filtered_all_ann)
 #There are 190 mutations in total
+x = table(filtered_all_ann$type)
+pie(x)
 
 #Breaking down the type of mutations by category: % of intergenic mutations, % of indel mutations, % of SNP mutations, % of xNP's
 
