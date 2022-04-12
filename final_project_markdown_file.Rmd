@@ -561,7 +561,7 @@ scheirerRayHare(mutation_rate ~ functional_category + bact_pop, data = melted_mu
 
 Now we have a dataframe containing mutations rates for each functional category as a column with samples as each rows. 
 We will then do a ANOVA to determine which the effect of sample population (whether the sample evolved with Ecoli C, K12, or mixed), functional category or the interaction between the two on the mutation rate. 
-The paper used an SRH nono-parametric two-way ANOVA for this analysis, as the data is not normally distributed. 
+The paper used an SRH non-parametric two-way ANOVA for this analysis, as the data is not normally distributed. 
 ```{r}
 
 
@@ -569,10 +569,27 @@ The paper used an SRH nono-parametric two-way ANOVA for this analysis, as the da
 ```
 
 
-#Plotting mutations across the genome: Jake Do this
+#Plotting mutations across the genome: Jake- can you make this look more like the paper's figure? Add some horizontal lines, label which one is which replicate, make sure we have the same categories if possible, do the empty / filled triangles?
 Our last task will be to graph the mutations for each sample across then entire genome length. This will tell us if there's any similarity between samples, and we can also compare against the original figure here. 
 ```{r}
+#We are going to try and do this with a scatter plot, using the x- axis as position of the mutation in the genome. We will make the y-axis a different fixed number for each sample. 
 
+#First we will make a dictionary with y-axis values for each of the sample names: 
+y_axis_dict <- c("47_output" = 5, "48_output" = 10, "49_output" = 15, "50_output" =20, "51_output" = 25, "52_output"= 30, "53_output" = 35, "54_output" = 40, "55_output" =55 , "56_output" =60 , "57_output"= 65, "58_output"= 70 , "59_output"= 75 , "60_output" = 45, "61_output" =50 )
+
+#Now we are going to add a new column to the "filtered_all_ann" dataframe which contains the y-axis value corresponding to each sample name. 
+mutation_y_axis_vals <- c()
+output_names <- filtered_all_ann$title
+for(output_name in output_names){
+  y_val <- y_axis_dict[output_name]
+  mutation_y_axis_vals <- c(mutation_y_axis_vals,y_val)
+}
+filtered_all_ann$y_ax_val <- mutation_y_axis_vals #Adding this to our mutation dataframe
+
+
+#Now we will attempt to maake a scatterplot with all the mutations: 
+library(ggplot2)
+ggplot(filtered_all_ann, aes(x=position,y=y_ax_val, shape = mutation_category, color = gene_function)) + geom_point()
 
 ```
 
