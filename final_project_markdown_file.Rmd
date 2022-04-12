@@ -10,19 +10,16 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 #Introdution (Eric is writing this)
-blah blah phage mutations & stuff
+The paper we are reviewing is called "Experimental evolution for niche breadth in bacteriophage T4 highlights the importance of structural genes". It was the doctoral thesis for Jenny Pham at Harvard. The purpose of this paper was to analyze the evolution of T4 bacteriophage. T4 baceriophage is lytic virus which infects E.coli.
+
+They did this by growing a  T4 bacteriophage (derived from a common ancestor) in 15 cultures of bacteria for approximately 50 generations. Each culture was passaged daily.  5 of the bacteria cultures had E.coli C, 5 had E.coli K12, and 5 had alternating populations
 
 
-## Downloading files from SRA
+After 20 days, the author isolated phage population samples from each of the 15 populations and preformed whole genome sequencing on them with a coverage depth of 1000x. Then then compared the mutations from each of the samples. 
 
-First, we have to download the sequences from SRA. 
+We chose this analysis because it is very similar to what one team member (Eric Lyall) will have to for the Tropini Lab this summer. This analysis also makes use of a new mutation-calling tool called breseq, which neither of us have had previous exposure to. 
 
-```{r}
-# using conda to install the sra tools package
-#conda install -c bioconda sra-tools
-
-# fastq-dump SRR10323947 --split-files gets us the last sample
-```
+#Methods: 
 
 ## Downloading the reference genome:
 
@@ -44,18 +41,43 @@ After transferring over the file, we need to check to make sure it contains the 
 
 ```
 ![Accessing reference genome on GeneBank](view_genebank_file.png)
+We have sucessfully downloaded the reference genome! 
 
-#Doing quality control, trimmomatic on fastq files: 
+#Mutation calling pipeline for a single sample:
+We will now overview the data analysis pipeline for a single sample (SRR10323947). 
+This consists of
+1) downloading the fastq files from SRA
+2) Running fastqc on the fastq files
+3) Using trimmomatic to clean up are fastq files and remove the illumina adapters. 
+4) Running fastqc again on the trimmed samples to confirm trimmmatic was sucessful
+5) Running breseq to find mutations relative to the T4 bacteriophage reference genome. 
+6) Using gdtools to get an annotated list of the mutations. 
 
-First we can use fastQC to check the quality of our files: 
+After this section, we will develop a series of pipelines that does all of this together. 
+## Step 1: Downloading the fastq file from SRA:
+
+The first step is to download the sequences for each of the 15 samples from SRA. 
+
+```{r}
+#using conda to install the sra tools package
+#conda install -c bioconda sra-tools
+
+#It's important to add the split files command to get both forwards and reverse reads. 
+# fastq-dump SRR10323947 --split-files 
+```
+
+
+#Step 2:Running fastqc on the the fastq file: 
+
+We can use fastQC to check the quality of our files. This checks the quality socres of our sequences, and tells us if there is unexpected coverage, adapter content or unkonwn nucleotides.   
 ```{r}
 #fastqc SRR10323947_1.fastq
-
 ```
 
 The read quality drops off significantly near the ends of reads. This means we will have to use trimmomatic to remove some of the poor quality bases near the end of every read. This allows downstream ananlysis with breseq to only work with high quality data. 
 ![Base quality has significant drop off near the ends of reads](fastqc_example.png)
 
+##Step 3: USing trimmomatic to filter the fastq file and remove illumina adapters. 
 Next we can use trimmomatic to trim off the adapter sequences and poor reads near the end. The paper mentions: "Demultiplexed reads were trimmed for Nextera adapter sequences using Trimmomatic with default settings". We also have to trim off the illumina adapters from our reads, as shows in the photo below
 ![Adapters to get rid of](fastqc_adapters_to_trim.png)
 
@@ -68,11 +90,12 @@ Next we can use trimmomatic to trim off the adapter sequences and poor reads nea
 #NExt we need to copy the illumina adapters for nextera paired-end sequencing into our working directory. These are downloaded with trimmomatic. 
 #(bmeg400e_env) elyall_bmeg22@orca01:~/anaconda3/pkgs/trimmomatic-0.39-hdfd78af_2/share/trimmomatic/adapters$ cp NexteraPE-PE.fa /home/elyall_bmeg22/final_project/
 
-#Now we can run the trimmomatic commands to remove the illumina adapters. 
+#Now we can run the trimmomatic commands to remove the illumina adapters. The other parameters (sliding window, minlen, 2:40:15) are default parameters taken off the trimmomatic documentation, as the study authors did not say what paraemters they used. 
 
 #trimmomatic PE SRR10323947_1.fastq.gz SRR10323947_2.fastq.gz SRR10323947_1.trim.fastq.gz SRR10323947_1un.trim.fastq.gz SRR10323947_2.trim.fastq.gz SRR10323947_2un.trim.fastq.gz SLIDINGWINDOW:4:20 MINLEN:25 ILLUMINACLIP:NexteraPE-PE.fa:2:40:15
 
-#Here are the arguements: 
+#Below is the output of the trimmomatic command: 
+
 #TrimmomaticPE: Started with arguments:
 # SRR10323947_1.fastq.gz SRR10323947_2.fastq.gz SRR10323947_1.trim.fastq.gz SRR10323947_1un.trim.fastq.gz SRR10323947_2.trim.fastq.gz #SRR10323947_2un.trim.fastq.gz SLIDINGWINDOW:4:20 MINLEN:25 ILLUMINACLIP:NexteraPE-PE.fa:2:40:15
 #Using PrefixPair: 'AGATGTGTATAAGAGACAG' and 'AGATGTGTATAAGAGACAG'
@@ -87,18 +110,49 @@ Next we can use trimmomatic to trim off the adapter sequences and poor reads nea
 
 ```
 
-
-You can see the tha nextera adapter content is now removed. There are still quality control concerns, but since the authors did not make any adjusttments, neither will we. 
-![After cleaning up the adapter content](cleaned_adapters.png)
-
-The next step is to download breseq:
+## Step 4: Running an additional fastqc to confirm the adapter sequences are removed: 
 ```{r}
+#fastqc SRR10323947_1.trim.fastq.gz
+```
+You can see the tha nextera adapter content is now removed. There are still quality control concerns, but since the authors did not make any additional adjusttments, neither will we. 
+![After cleaning up the adapter content](cleaned_adapters.png)
+## Step 5: Running breseq to call mutations on our sample
+The next step is to download and run breseq. breseq is a pipeline that is best for calling mutations on small microbial genomes. It starts by allinging the reads to a reference sequence, and then looks for consistent mismatches. 
+Breseq can be run in "population mode" with the -p flag. This is used when a heterogeneous population is sequences, and one wants to find all of the possible mutations against a reference sequence. If greater than 5% of the reads at a given position mismatch, breseq reports a mutation at this position. 
+breseq will report all of the mutations, their frequencies and positions. It also looks at the reading frame and determines if mutations are synonymous or non-synonymous, and identified deletions, insertions and SNP's. Using the genome annotation from the reference sequence, breseq will report what gene the mutation occurs in and the function of that gene if it's available. These features make breseq and incredibly useful tool for analyzing mutations in microbial sequences. 
+```{r}
+
+#Breseq requires bowtie and samtools to be installed first. 
+
+#conda -c bioconda install bowtie
+#conda -c bioconda install samtools
+
+#Now installing breseq
 #conda -c bioconda install breseq
 
-#Actually running it for a single sample:
+#ARunning breseq on a single sample, where seqeunce.gb is our reference T4 bacteriophage sequene. 
 # breseq -p -r sequence.gb -o /home/elyall_bmeg22/final_project/paired/trimmed_files/breseq_run/ SRR10323947_1.trim.fastq.gz SRR10323947_2.trim.fastq.gz
 ```
+Let's look at some of the output files of our breseq data!
 
+Breseq gives us summary information for each sample. This lets us know that most of our read are mapped. Breseq requires 90% of a reads length to map. 
+![breseq summary information](summary_info.png)
+
+Breseq also give a list of mutation predictions for each sample:
+
+![breseq mutation predictions](sample_output.png)
+If you click on the evidence, it will show you all of the reads mapping to that position, and highlight the exptcted mutation. 
+![breseq alignment evidence](align_evidence.png)
+
+We can see our coverage is close to 1000 base pairs on average (which is what the authors aimed to seqeunce at). Breseq highlights 
+![breseq coverage example](Coverage_example.png)
+
+
+#Creating pipeline to preform analysis on all 15 samples:
+This section contains a combination of pipelines that will ultimately run mutation calling on all 15 of our samples
+
+
+##Downloading all of the SRA names from NIH:
 Making a textfile containing all of the SRA names
 ```{r}
 #First we have to download the acession list as a txt file form NCBI
@@ -109,61 +163,75 @@ nano SRA_seqs.txt #We then copy paste all of the SRA #'s names into this file
 
 ```
 
-Now, we are going to generate a pipline that downloads the fastQ files, runs fastQC on each of these, and then runs trimmomatic on each sample. 
-Normaly we would use a job scheduler to do this, but apparently our server can't do this.
+##Creating a pipeline that downloads fastq files and runs fastQC on them
+Now, we are going to generate a pipline that downloads the fastQ files, runs fastQC on each of these.
+Normally we would use a job scheduler to do this, but apparently our server can't do this.
 So we will used Dr. De Boer's script which runs a script for each line in an input file
-The scripe is here: (https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/main/Assignment_2/runTheseJobsSerially.sh
+The script is here: (https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/main/Assignment_2/runTheseJobsSerially.sh
 
 ```{r}
 #Downloading Carl's script: 
-wget https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/main/Assignment_2/runTheseJobsSerially.sh
+
+#wget https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/main/Assignment_2/runTheseJobsSerially.sh
+
 #Getting permissions to run it:
-chmod +x runTheseJobsSerially.sh
+
+#chmod +x runTheseJobsSerially.sh
+
 #Creating a pipeline called down_trim_pipeline.sh that downloads files from NCBI, runs fastQC and then runs trimmomatic on them. 
 
 #First we make the name of the pipeline: 
-nano down_trim_pipeline.sh
+#nano down_trim_pipeline.sh
 
 #Then we get permission on it
-chmod +x down_trim_pipeline.sh
-#Then we rune it!
-./runTheseJobsSerially.sh ./pipelines/down_trim_pipeline.sh SRA_seqs.txt
+
+#chmod +x down_trim_pipeline.sh
+
+#Then we run it!
+
+#./runTheseJobsSerially.sh ./pipelines/down_trim_pipeline.sh SRA_seqs.txt
 
 #Then, we start adding to it!
 
 
 #!/bin/bash
-set -e # this makes the whole script exit on any error.
-sample=$1
-mkdir -p fastq_samples # making a directory to add the fastq files
-mkdir -p fastqc_files #making a directory for fastqc_files
-mkdir -p downtrim_logfiles
-#Now, going to run the pipeline: 
 
-echo running pipeline for $sample
-if [ ! -e downtrim_logfiles/$sample.fastq.done ] 
-then
-        echo Downloading $sample
-        #Command download sample:
-        fastq-dump $sample --split-files --outdir fastq_samples/
-        touch downtrim_logfiles/$sample.fastq.done #add a flag to say fastq downloaded.
-else
-        echo Already performed fastqc of $sample
-        fi
-if [ -e downtrim_logfiles/$sample.fastq.done ] #if the fastq is done,do fastqc
-then
-        echo Running fastqc with $sample
-        mkdir fastqc_files/$sample
-        fastqc $fastq_samples/{sample}_1.fastq --outdir fastqc_files/$sample/
-        fastqc $fastq_samples/{sample}_2.fastq --outdir fastqc_files/$sample/
-        touch downtrim_logfiles/$sample.fastqc.done
-else
-        echo: FastQC was not made sucessfully.
-        fi
+
+#set -e # this makes the whole script exit on any error.
+#sample=$1
+#mkdir -p fastq_samples # making a directory to add the fastq files
+#mkdir -p fastqc_files #making a directory for fastqc_files
+#mkdir -p downtrim_logfiles
+##Now, going to run the pipeline: 
+
+#echo running pipeline for $sample
+#if [ ! -e downtrim_logfiles/$sample.fastq.done ] 
+#then
+#        echo Downloading $sample
+#       #Command download sample:
+#        fastq-dump $sample --split-files --outdir fastq_samples/
+#        touch downtrim_logfiles/$sample.fastq.done #add a flag to say fastq downloaded.
+#else
+#        echo Already performed fastqc of $sample
+#        fi
+#if [ -e downtrim_logfiles/$sample.fastq.done ] #if the fastq is done,do fastqc
+#then
+#        echo Running fastqc with $sample
+#        mkdir fastqc_files/$sample
+#        fastqc $fastq_samples/{sample}_1.fastq --outdir fastqc_files/$sample/
+#        fastqc $fastq_samples/{sample}_2.fastq --outdir fastqc_files/$sample/
+#        touch downtrim_logfiles/$sample.fastqc.done
+#else
+#        echo: FastQC was not made sucessfully.
+#        fi
 
 ```
 
-Next, we can make sure all the fastq files are gzipped before running trimmomatic:
+#Making a trimmomatic pipeline for all samples
+We found no additiona concerns beyone the ones mention with our pilot sample in the fastQC.
+Before running a trimmomatic pipeline on all of the samples, we have to gzip the files. 
+Now we can make a pipeline to trim all the samples: 
+
 ```{r}
 #gzip fastq_samples/*.fastq
 
@@ -172,12 +240,13 @@ nano pipelines/trimmomatic.sh
 chmod +x trimmomatic.sh
 
 #running the pipeline: 
-
+#./runTheseJobsSerially.sh ./pipelines/trimmomatic.sh SRA_seqs.txt
         
 
 ```
 
-Now making a pipeline to trim all the samples: 
+Below is the code for our trimmomatic pipeline
+
 ```{r}
 #!/bin/bash
 set -e # this makes the whole script exit on any error.
@@ -194,9 +263,8 @@ else
         fi
 ```
 
-SRR10323947_1.fastq.gz
-SRR10323947_1.fastq.gz
-
+##Making a pipeline to run breseq
+This pipeline could have been attached to the trimmomatic pipeline, but I prefer to run fastQC on some of the trimmed samples to ensure the trimmins is successful. 
 
 ```{r}
 #Now we make a pipeline to run breseq:
@@ -223,12 +291,6 @@ else
         fi
 ```
 
-```{r}
-#Writing a standa-alonE breseq: 
-#Using sample SRR10323958
-
-# breseq -p -r sequence.gb -o /home/elyall_bmeg22/final_project/T2breseq_files/SRR10323958/ trimmomatic_files/SRR10323958/SRR10323958_1.trim.fastq.gz trimmomatic_files/SRR10323958/SRR10323958_2.trim.fastq.gz
-```
 
 #breseq mutation calling has finished!
 Typically at this point we would run a single line of breseq code that would filter all the mutations we found against the ancestral sequence.
@@ -241,25 +303,25 @@ We discussed these changes with Carl and he said we would not lose difficultly s
 
 
 Defining which sample is what- this is what Eric has found so far:  
-SRR 61 = 55D18R1
-SRR 60 = 55D18R2
-SRR 59 = CD18R1
-SRR 58 =CD18R2
-SRR 57 = CD18R3
-SRR 56 = CD18R4
-SRR 55 = CD18R5
-SRR 54 = 55D18R3
-SRR 53 = JAKE FIND THIS
-SRR 52 = JAKE FIND THIS
-SRR 51 = JAKE FIND THIS
-SRR 50 = JAKE FIND THIS
-SRR 49 = JAKE FIND THIS
-SRR 48 = 55CD18R4
-SRR 47 = 55CD18R5
+SRR 61 = 55D18R1 # E coli K12
+SRR 60 = 55D18R2 #E coli K12
+SRR 59 = CD18R1 #E coli C
+SRR 58 =CD18R2 #E coli C
+SRR 57 = CD18R3 #E coli C
+SRR 56 = CD18R4 #E coli C
+SRR 55 = CD18R5 #E coli C
+SRR 54 = 55D18R3 # E coli K12
+SRR 53 = 55D18R4 # # E coli K12
+SRR 52 = 55D18R5 # E coli K12
+SRR 51 = 55CD18R1  # alternating e.coli C and K12
+SRR 50 = 55CD18R2 # alternating e.coli C and K12
+SRR 49 =55CD18 R3 # alternating e.coli C and K12
+SRR 48 = 55CD18R4 # alternating e.coli C and K12
+SRR 47 = 55CD18R5 # alternating e.coli C and K12
 
 
 #Annotating our mutations & filtering against the supplementary table: (done)
-To get more detail on our mutation, we can used the ANNOTATE function from breseq.
+To get more detail on our mutations, we can used the ANNOTATE function from breseq's gdtools 
 This creates an annotated file that adds detail to each mutation found, including the type (e.g SNP), and whether is synonymous or non-synonymous.
 ```{r}
  
@@ -306,8 +368,6 @@ for(name_of_col in trans_cols)
         }
         
 }
-
-#Finding percentage of mutations that are unique to a specific population:
 
 ```
 
@@ -445,7 +505,7 @@ rownames(n_mut_per_fcn_cat_df) <- c(unique(name_gene_fcn_df$title))
 n_mut_per_fcn_cat_df[is.na(n_mut_per_fcn_cat_df)] <- 0
 
 #We only need to work with sample names & gene functions here, so we can remove the other columns:
-name_gene_fcn_df <- filtered_all_ann[c("title","gene_function")]
+name_gene_fcn_df <- filtered_all_ann[c("title","gene_function")] 
 
 #Getting a summary of the # of mutations per each functional category in our experiment
 fcn_breakdown <- name_gene_fcn_df  %>% group_by(title,gene_function) %>% summarise(n=n())
@@ -474,8 +534,26 @@ n_mut_per_fcn_cat_df <- select(n_mut_per_fcn_cat_df,-unknown)
 library(rcompanion)
 
 #help("scheirerRayHare")
-#we need to run one of thises
+#we need to run one of these
 
+#First let's try multing this
+library(reshape2)
+library(vctrs)
+library(dplyr)
+
+#Melting the dataframe in preparation for an anova:
+melted_mut_fcn_catdf <- melt(n_mut_per_fcn_cat_df)
+
+#Renaming the columns to something we can understand:
+melted_mut_fcn_catdf <- melted_mut_fcn_catdf %>% rename(functional_category = 1, mutation_rate = 2)
+
+
+#Now making a vector containing the population designations: 
+bact_pop <- vec_rep(c(rep("E.coli K12",2), rep("E.coli C", 5), rep("E.coli K12",3), rep("Alternating",5)),ncol(n_mut_per_fcn_cat_df))
+
+melted_mut_fcn_catdf$bact_pop <- bact_pop #Adding the bacterial population to the dataframe
+
+scheirerRayHare(mutation_rate ~ functional_category + bact_pop, data = melted_mut_fcn_catdf)
 
 ```
 
