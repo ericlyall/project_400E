@@ -493,6 +493,8 @@ Now we can get the mutation rate for each sample across each functional category
 
 ```{r}
 #We will start by making a dataframe where each column is a fucntional category, each row is a sample and values are # of mutations: 
+#We only need to work with sample names & gene functions here, so we can remove the other columns:
+name_gene_fcn_df <- filtered_all_ann[c("title","gene_function")] 
 
 #Creating an empty dataframe no # mutations per functional category. 
 n_mut_per_fcn_cat_df <- data.frame(matrix(ncol = 12, nrow = 15)) 
@@ -506,8 +508,7 @@ rownames(n_mut_per_fcn_cat_df) <- c(unique(name_gene_fcn_df$title))
 #Filling this dataframe with 0's as a default:
 n_mut_per_fcn_cat_df[is.na(n_mut_per_fcn_cat_df)] <- 0
 
-#We only need to work with sample names & gene functions here, so we can remove the other columns:
-name_gene_fcn_df <- filtered_all_ann[c("title","gene_function")] 
+
 
 #Getting a summary of the # of mutations per each functional category in our experiment
 fcn_breakdown <- name_gene_fcn_df  %>% group_by(title,gene_function) %>% summarise(n=n())
