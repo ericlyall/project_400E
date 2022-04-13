@@ -430,19 +430,36 @@ ggplot(high_f_mut_func, aes(x="",y=n,fill = gene_function))+ geom_bar(width = 1,
 #JAKE DO THIS!!
 
 #Getting the total number of mutations
+library(dplyr)
+library(ggplot2)
 
 nrow(filtered_all_ann)
 #There are 190 mutations in total
-x = table(filtered_all_ann$type)
-pie(x)
+
+x = data.frame(table(filtered_all_ann$type))
+names(x)[names(x) == "Var1"] <- "Mutation_Type"
+names(x)[names(x) == "Freq"] <- "Frequency"
+p = ggplot(data=x, aes(x=Mutation_Type, y=Frequency, fill = Mutation_Type)) +
+  geom_bar(stat="identity")+
+  geom_text(aes(label=Frequency), vjust=-0.3, size=3.5)+
+  theme_minimal()
+
+p
 
 #Breaking down the type of mutations by category: % of intergenic mutations, % of indel mutations, % of SNP mutations, % of xNP's
 
-#Showing this in a pi chart
+#Looking at specifically the SNP mutations to find out how many are synonymous, and how many are non-synonymous, and how many are intergenic
+filtered_all_ann_noNonSNP <- filtered_all_ann[filtered_all_ann$type == 'SNP',]
+filtered_all_ann_noNonSNP[!grepl("snp_nonsynonymous|nonsense", filtered_all_ann_noNonSNP$mutation_category),]
+y = data.frame(table(filtered_all_ann_noNonSNP$snp_type))
+names(y)[names(y) == "Var1"] <- "SNP_Type"
+names(y)[names(y) == "Freq"] <- "Frequency"
+p = ggplot(data=y, aes(x=SNP_Type, y=Frequency, fill = SNP_Type)) +
+  geom_bar(stat="identity")+
+  geom_text(aes(label=Frequency), vjust=-0.3, size=3.5)+
+  theme_minimal()
 
-#Looking at specifically the SNP mutations to find out how many are synonymous, and how many are non-synonymous, and how many are integenic
-
-#Show this in a pi chart
+p
 
 ```
 
@@ -566,18 +583,20 @@ scheirerRayHare(mutation_rate ~ functional_category + bact_pop, data = melted_mu
   
   }
 
-
+print("no removals")
 SRHanova(filtered_all_ann,func_des_df) #no removals
 filtered_all_ann_noNonSNP <- filtered_all_ann[filtered_all_ann$type == 'SNP',]
 filtered_all_ann_synonymous <- filtered_all_ann_noNonSNP[filtered_all_ann_noNonSNP$snp_type == 'synonymous',]
 filtered_all_ann_nonsynonymous <- filtered_all_ann_noNonSNP[filtered_all_ann_noNonSNP$snp_type == 'nonsynonymous',]
+print("synonymous only")
 SRHanova(filtered_all_ann_synonymous,func_des_df)
+print("nonsynonymous only")
 SRHanova(filtered_all_ann_nonsynonymous,func_des_df)
 
 ```
 
 ```{r}
-
+# trying to generate the stacked bar graph by variant as in the paper 
 
 ```
 
