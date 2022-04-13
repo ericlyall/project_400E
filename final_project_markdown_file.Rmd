@@ -350,7 +350,7 @@ We may have more mutations because the there could be mutations that we have (an
 distinguishing these, we will leave them in for our analysis
 
 
-#Finding the number of unique mutations: (unfinished)- Jake try this if you want, but it's a lower priority
+#Finding the number of unique mutations: (unfinished)- Jake try this if you want, but it's a lower priority# dwbi
 ```{r}
 
 #Jake you can try this if you want. If you can somehow do the above filtering on a gd file directly, you can then do gdtools COMPARE, grab the html file and work from there. I'm not great at filtering shit in bash
@@ -577,71 +577,7 @@ SRHanova(filtered_all_ann_nonsynonymous,func_des_df)
 ```
 
 ```{r}
-#We will start by making a dataframe where each column is a fucntional category, each row is a sample and values are # of mutations: 
-#We only need to work with sample names & gene functions here, so we can remove the other columns:
-name_gene_fcn_df <- filtered_all_ann[c("title","gene_function")] 
 
-#Creating an empty dataframe no # mutations per functional category. 
-n_mut_per_fcn_cat_df <- data.frame(matrix(ncol = 12, nrow = 15)) 
-
-#Assigning each functional category to the column names
-colnames(n_mut_per_fcn_cat_df) <- c(unique(func_des_df$function_cat),"unknown")
-
-#Assinging each sample to the rownames: 
-rownames(n_mut_per_fcn_cat_df) <- c(unique(filtered_all_ann$title))
-
-#Filling this dataframe with 0's as a default:
-n_mut_per_fcn_cat_df[is.na(n_mut_per_fcn_cat_df)] <- 0
-
-
-
-#Getting a summary of the # of mutations per each functional category in our experiment
-fcn_breakdown <- name_gene_fcn_df  %>% group_by(title,gene_function) %>% summarise(n=n())
-
-#Adding this data into the n_mut_per_fcn_cat_df
-for(r in 1:nrow(fcn_breakdown)){
-        n_mut_per_fcn_cat_df[fcn_breakdown$title[r],fcn_breakdown$gene_function[r]] <- fcn_breakdown$n[r]
-}
-
-#Then, we will normalize each column to the number of nucleotides in each functional category: 
-
-#Getting a list of the category names: 
-cat_names <- colnames(n_mut_per_fcn_cat_df)
-
-#For every category name, find the length of the functional category in base pairs. Then will will divide the sample mutations in a category by this number to get the "mutation rate" (# of mutation in a category / size of category in BP)
-
-for(cat in cat_names){
-        n_mut_per_fcn_cat_df[cat] <- n_mut_per_fcn_cat_df[cat]/ sum((func_des_df %>% filter(function_cat == cat))$gene_length)
-}
-
-#We are going to discard the unknown mutation columns from our analysis, because we can't normalize this data to find a mutation rate( the number of unknown genes is , unsurprisingly, unknown)
-n_mut_per_fcn_cat_df <- select(n_mut_per_fcn_cat_df,-unknown)
-
-#Now running the ANOVA
-#install.packages('rcompanion)
-library(rcompanion)
-
-#help("scheirerRayHare")
-#we need to run one of these
-
-#First let's try multing this
-library(reshape2)
-library(vctrs)
-library(dplyr)
-
-#Melting the dataframe in preparation for an anova:
-melted_mut_fcn_catdf <- melt(n_mut_per_fcn_cat_df)
-
-#Renaming the columns to something we can understand:
-melted_mut_fcn_catdf <- melted_mut_fcn_catdf %>% rename(functional_category = 1, mutation_rate = 2)
-
-
-#Now making a vector containing the population designations: 
-bact_pop <- vec_rep(c(rep("E.coli K12",2), rep("E.coli C", 5), rep("E.coli K12",3), rep("Alternating",5)),ncol(n_mut_per_fcn_cat_df))
-
-melted_mut_fcn_catdf$bact_pop <- bact_pop #Adding the bacterial population to the dataframe
-
-scheirerRayHare(mutation_rate ~ functional_category + bact_pop, data = melted_mut_fcn_catdf)
 
 ```
 
