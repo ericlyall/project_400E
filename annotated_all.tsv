@@ -137,7 +137,7 @@ Y	454	H		TAT	454	1		CAT	1	18	1360	tail sheath subtilisin-like domain-containing 
 Q	593	Q		CAG	593	3		CAA	1	18	1779	tail sheath subtilisin-like domain-containing protein	>		18			T4p167		T4p167			snp_synonymous		G		100314	100314	100314	A					NC_000866		synonymous	-1	47_output	11		SNP
 G	594	G		GGA	594	3		GGG	1	18	1782	tail sheath subtilisin-like domain-containing protein	>		18			T4p167		T4p167			snp_synonymous		A		100317	100317	100317	G					NC_000866		synonymous	-1	47_output	11		SNP
 I	595	N		ATT	595	2		AAT	9.49243069e-01	18	1784	tail sheath subtilisin-like domain-containing protein	>		18			T4p167		T4p167			snp_nonsynonymous		T		100319	100319	100319	A					NC_000866		nonsynonymous	-1	47_output	11		SNP
-K|K	152|130	E|E		AAA|AAA	152|130	1|1		GAA|GAA	1	21|21	454|388	prohead core scaffolding protein and protease|prohead core scaffolding protein and protease	>|>		21,21			T4p172|T4p173		T4p172,T4p173			snp_nonsynonymous|nonsynonymous		A		103901	103901	103901	G					NC_000866		nonsynonymous|nonsynonymous	-1	47_output	11|11		SNP
+K|K	152|130	E|E		AAA|AAA	152|130	1|1		GAA|GAA	1	21|21	454|388	prohead core scaffolding protein and protease|prohead core scaffolding protein and protease	>|>		21,21			T4p172|T4p173		T4p172,T4p173			nonsynonymous		A		103901	103901	103901	G					NC_000866		nonsynonymous|nonsynonymous	-1	47_output	11|11		SNP
 									1	22	coding (462-463/810 nt)	prohead core protein	>	22				T4p174	T4p174				small_indel		AG		104578	104579	104578	GC					NC_000866	2		-1	47_output			SUB
 L	161	L		CTC	161	3		CTG	1	22	483	prohead core protein	>		22			T4p174		T4p174			snp_synonymous		C		104599	104599	104599	G					NC_000866		synonymous	-1	47_output	11		SNP
 L	386	L		CTG	386	1		TTG	1	23	1156	capsid protein	>		23			T4p175		T4p175			snp_synonymous		C		106100	106100	106100	T					NC_000866		synonymous	-1	47_output	11		SNP
@@ -1086,7 +1086,7 @@ P	188	S		CCC	188	1		TCC	1	segA	562	SegA homing endonuclease	<		segA			T4p042		T4
 									9.41922188e-01	imm.1/43	intergenic (-168/+16)	iduronate sulfatase/DNA polymerase	</<				1	T4p046/T4p047					small_indel		C		27181	27181	27181	T					NC_000866			-1	52_output			INS
 A	27	A		GCC	27	3		GCT	1	44	81	AAA family ATPase	<		44			T4p050		T4p050			snp_synonymous		G		31786	31786	31786	A					NC_000866		synonymous	-1	52_output	11		SNP
 									9.31226730e-01	44/45	intergenic (-35/+16)	AAA family ATPase/sliding clamp	</<			44	1	T4p050/T4p051			T4p050		small_indel		G		31901	31901	31901	A					NC_000866			-1	52_output			INS
-T|*	3|65	A|W		ACA|TGA	3|65	1|3		GCA|TGG	9.12332535e-02	a-gt.2|a-gt.3	7|195	a-gt.2 hypothetical protein|a-gt.3 hypothetical protein	<|<		a-gt.2,a-gt.3			T4p061|T4p062		T4p061,T4p062			snp_nonsynonymous|nonsense		T		38916	38916	38916	C					NC_000866		nonsynonymous|nonsense	-1	52_output	11|11		SNP
+T|*	3|65	A|W		ACA|TGA	3|65	1|3		GCA|TGG	9.12332535e-02	a-gt.2|a-gt.3	7|195	a-gt.2 hypothetical protein|a-gt.3 hypothetical protein	<|<		a-gt.2,a-gt.3			T4p061|T4p062		T4p061,T4p062			snp_nonsynonymous		T		38916	38916	38916	C					NC_000866		nonsynonymous|nonsense	-1	52_output	11|11		SNP
 									1	55.1	coding (210/264 nt)	gp55.1 hypothetical protein	<	55.1				T4p066	T4p066				small_indel				40247	40247	40247	C					NC_000866	1		-1	52_output			DEL
 Q	41	Q		CAG	41	3		CAA	1	55.2	123	gp55.2 hypothetical protein	<		55.2			T4p067		T4p067			snp_synonymous		C		40663	40663	40663	T					NC_000866		synonymous	-1	52_output	11		SNP
 									8.99935246e-01	55.3	coding (214/240 nt)	gp55.3 hypothetical protein	<		55.3		1	T4p068		T4p068			small_indel		G		40825	40825	40825	A					NC_000866			-1	52_output			INS
