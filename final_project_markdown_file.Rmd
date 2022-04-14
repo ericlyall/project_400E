@@ -627,8 +627,8 @@ filtered_all_ann$population_name <- population_y_axis_vals #Adding this to our m
 
 #Now we will attempt to maake a scatterplot with all the mutations: 
 library(ggplot2)
-p = ggplot(filtered_all_ann, aes(x=position,y=y_ax_val, shape = mutation_category, color = gene_function)) + geom_point() + scale_shape_manual(values = c(2, 24, 21, 22, 5, 4)) 
-p + facet_grid(population_name ~ .)
+p = ggplot(filtered_all_ann, aes(x=position,y=y_ax_val, shape = mutation_category, color = gene_function)) + geom_point(aes(fill = gene_function)) + scale_shape_manual(values = c(2, 24, 21, 22, 5, 4)) 
+p + facet_grid(factor(population_name, level = c('E.coli C','E.coli K12','Alternating C & K12'))~.)
 
 ```
 
