@@ -10,14 +10,21 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 #Introdution (Eric is writing this)
-The paper we are reviewing is called "Experimental evolution for niche breadth in bacteriophage T4 highlights the importance of structural genes". It was the doctoral thesis for Jenny Pham at Harvard. The purpose of this paper was to analyze the evolution of T4 bacteriophage. T4 baceriophage is lytic virus which infects E.coli.
+The paper we are reviewing is called "Experimental evolution for niche breadth in bacteriophage T4 highlights the importance of structural genes". It was the doctoral thesis for Jenny Pham at the Department of Organismic and Evolutionary Biology at Harvard University.. This paper anayzed the evolution of T4 bacteriophage, which is a lytic virus that infects E.coli.
+The purpose of this paper was to gain a better understanding of "niche breadth evolution". Researchers wanted to understand how growing T4 bacteiophage in different niches (different E.coli strains) drives evolution. Specifically, this paper looked at what kind of genes were likely to mutate, and how the niche influence mutations. 
 
-They did this by growing a  T4 bacteriophage (derived from a common ancestor) in 15 cultures of bacteria for approximately 50 generations. Each culture was passaged daily.  5 of the bacteria cultures had E.coli C, 5 had E.coli K12, and 5 had alternating populations
-
-
+Methods: The authors grew T4 bacteriophage (derived from a common ancestor) in 15 cultures of bacteria for approximately 50 generations. Each culture was passaged daily. 5 of the bacteria cultures had E.coli C, 5 had E.coli K12, and 5 had alternating populations
 After 20 days, the author isolated phage population samples from each of the 15 populations and preformed whole genome sequencing on them with a coverage depth of 1000x. Then then compared the mutations from each of the samples. 
 
-We chose this analysis because it is very similar to what one team member (Eric Lyall) will have to for the Tropini Lab this summer. This analysis also makes use of a new mutation-calling tool called breseq, which neither of us have had previous exposure to. 
+The goals of our re-analysis are the following: 
+1) Preform mutation calling on all 15 samples
+2) Breakdown the types of mutations that occurred in this dataset, and see if they are similar to the author
+3) Look at the relative rates of mutations across 11 functional gene categories and niches (what strain the phage were evolved on). See if these results are similar to the author
+4) Graphically compare mutations across different sample populations to look for similar mutation patterns
+We want to demonstrate that mutation in structural genes drive evolution of the bacteriophage. 
+
+We chose this analysis because it is very similar to what one team member (Eric Lyall) will have to for the Tropini Lab this summer. This analysis also makes use of a new mutation-calling tool called breseq, which neither of us have had previous exposure to. We are also completely unfamilair working with microbial genomes, as we have only done human genomes in this course. 
+
 
 #Methods: 
 
@@ -39,6 +46,7 @@ After transferring over the file, we need to check to make sure it contains the 
 ```{r}
 #cat sequence.gb
 
+#We are able to see the nucleotide seqeunce here!
 ```
 ![Accessing reference genome on GeneBank](view_genebank_file.png)
 We have sucessfully downloaded the reference genome! 
@@ -51,7 +59,6 @@ This consists of
 3) Using trimmomatic to clean up are fastq files and remove the illumina adapters. 
 4) Running fastqc again on the trimmed samples to confirm trimmmatic was sucessful
 5) Running breseq to find mutations relative to the T4 bacteriophage reference genome. 
-6) Using gdtools to get an annotated list of the mutations. 
 
 After this section, we will develop a series of pipelines that does all of this together. 
 ## Step 1: Downloading the fastq file from SRA:
@@ -69,12 +76,12 @@ The first step is to download the sequences for each of the 15 samples from SRA.
 
 #Step 2:Running fastqc on the the fastq file: 
 
-We can use fastQC to check the quality of our files. This checks the quality socres of our sequences, and tells us if there is unexpected coverage, adapter content or unkonwn nucleotides.   
+We can use fastQC to check the quality of our files. This checks the quality socres of our sequences, and tells us if there is unexpected coverage, adapter content or unkonwn nucleotides. This needs to be run on both the forwards and reverse reads.
 ```{r}
 #fastqc SRR10323947_1.fastq
 ```
 
-The read quality drops off significantly near the ends of reads. This means we will have to use trimmomatic to remove some of the poor quality bases near the end of every read. This allows downstream ananlysis with breseq to only work with high quality data. 
+The read quality drops off significantly near the ends of reads. This means we will have to use trimmomatic to remove some of the poor quality bases near the end of every read. This allows downstream analysis with breseq to only work with high quality data. 
 ![Base quality has significant drop off near the ends of reads](fastqc_example.png)
 
 ##Step 3: USing trimmomatic to filter the fastq file and remove illumina adapters. 
@@ -87,10 +94,10 @@ Next we can use trimmomatic to trim off the adapter sequences and poor reads nea
 #First we have to make sure the fastqc files we have are in the zipped format- this makes it faster for trimmomatic. 
 #gzip *.fastq
 
-#NExt we need to copy the illumina adapters for nextera paired-end sequencing into our working directory. These are downloaded with trimmomatic. 
+#Next we need to copy the illumina adapters for nextera paired-end sequencing into our working directory. These are downloaded with trimmomatic. 
 #(bmeg400e_env) elyall_bmeg22@orca01:~/anaconda3/pkgs/trimmomatic-0.39-hdfd78af_2/share/trimmomatic/adapters$ cp NexteraPE-PE.fa /home/elyall_bmeg22/final_project/
 
-#Now we can run the trimmomatic commands to remove the illumina adapters. The other parameters (sliding window, minlen, 2:40:15) are default parameters taken off the trimmomatic documentation, as the study authors did not say what paraemters they used. 
+#Now we can run the trimmomatic commands to remove the illumina adapters. The other parameters (sliding window, minlen, 2:40:15) are default parameters taken off the trimmomatic documentation, as the study authors did not say what parameters they used. 
 
 #trimmomatic PE SRR10323947_1.fastq.gz SRR10323947_2.fastq.gz SRR10323947_1.trim.fastq.gz SRR10323947_1un.trim.fastq.gz SRR10323947_2.trim.fastq.gz SRR10323947_2un.trim.fastq.gz SLIDINGWINDOW:4:20 MINLEN:25 ILLUMINACLIP:NexteraPE-PE.fa:2:40:15
 
@@ -151,7 +158,6 @@ We can see our coverage is close to 1000 base pairs on average (which is what th
 #Creating pipeline to preform analysis on all 15 samples:
 This section contains a combination of pipelines that will ultimately run mutation calling on all 15 of our samples
 
-
 ##Downloading all of the SRA names from NIH:
 Making a textfile containing all of the SRA names
 ```{r}
@@ -159,12 +165,13 @@ Making a textfile containing all of the SRA names
 #https://www.ncbi.nlm.nih.gov/sra?term=SRP226618
 
 #creating a .txt file containing all of the SRA #'s for each sample: 
-nano SRA_seqs.txt #We then copy paste all of the SRA #'s names into this file 
+#nano SRA_seqs.txt 
+#We then copy paste all of the SRA #'s names into this file 
 
 ```
 
 ##Creating a pipeline that downloads fastq files and runs fastQC on them
-Now, we are going to generate a pipline that downloads the fastQ files, runs fastQC on each of these.
+Now, we are going to generate a pipeline that downloads the fastq files and runs fastQC on each of these.
 Normally we would use a job scheduler to do this, but apparently our server can't do this.
 So we will used Dr. De Boer's script which runs a script for each line in an input file
 The script is here: (https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/main/Assignment_2/runTheseJobsSerially.sh
@@ -175,28 +182,21 @@ The script is here: (https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/
 #wget https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/main/Assignment_2/runTheseJobsSerially.sh
 
 #Getting permissions to run it:
-
 #chmod +x runTheseJobsSerially.sh
 
 #Creating a pipeline called down_trim_pipeline.sh that downloads files from NCBI, runs fastQC and then runs trimmomatic on them. 
-
 #First we make the name of the pipeline: 
 #nano down_trim_pipeline.sh
 
 #Then we get permission on it
-
 #chmod +x down_trim_pipeline.sh
 
 #Then we run it!
-
 #./runTheseJobsSerially.sh ./pipelines/down_trim_pipeline.sh SRA_seqs.txt
 
-#Then, we start adding to it!
-
+#The pipeline is shown below:
 
 #!/bin/bash
-
-
 #set -e # this makes the whole script exit on any error.
 #sample=$1
 #mkdir -p fastq_samples # making a directory to add the fastq files
@@ -228,96 +228,101 @@ The script is here: (https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/
 ```
 
 #Making a trimmomatic pipeline for all samples
-We found no additiona concerns beyone the ones mention with our pilot sample in the fastQC.
+We found no additional concerns beyond the ones mention with our pilot sample in the fastQC.
 Before running a trimmomatic pipeline on all of the samples, we have to gzip the files. 
-Now we can make a pipeline to trim all the samples: 
 
 ```{r}
 #gzip fastq_samples/*.fastq
 
 #Making the name of the trimmomatic pipeline:
-nano pipelines/trimmomatic.sh
-chmod +x trimmomatic.sh
+
+#nano pipelines/trimmomatic.sh
+#chmod +x trimmomatic.sh
 
 #running the pipeline: 
 #./runTheseJobsSerially.sh ./pipelines/trimmomatic.sh SRA_seqs.txt
-        
-
 ```
 
 Below is the code for our trimmomatic pipeline
 
 ```{r}
 #!/bin/bash
-set -e # this makes the whole script exit on any error.
-sample=$1
-mkdir -p trimmomatic_files
-if [ ! -e downtrim_logfiles/$sample.trim.done ]
-then
-        mkdir trimmomatic_files/$sample
-        #trimmomatic PE $fastq_samples/${sample}_1.fastq.gz fastq_samples/${sample}_2.fastq.gz trimmomatic_files/$sample/${sample}_1.trim.fastq.gz trimmomatic_files/$sample/${sample}_1un.trim.fastq.gz trimmomatic_files/$sample/${sample}_2.trim.fastq.gz trimmomatic_files/$sample/${sample}_2un.trim.fastq.gz SLIDINGWINDOW:4:15 MINLEN:25 LEADING:3 TRAILING:3 ILLUMINACLIP:NexteraPE-PE.fa:2:40:15
+#set -e # this makes the whole script exit on any error.
+#sample=$1
+#mkdir -p trimmomatic_files
+#if [ ! -e downtrim_logfiles/$sample.trim.done ]
+#then
+#        mkdir trimmomatic_files/$sample
+#        trimmomatic PE $fastq_samples/${sample}_1.fastq.gz fastq_samples/${sample}_2.fastq.gz trimmomatic_files/$sample/${sample}_1.trim.fastq.gz trimmomatic_files/$sample/${sample}_1un.trim.fastq.gz trimmomatic_files/$sample/${sample}_2.trim.fastq.gz trimmomatic_files/$sample/${sample}_2un.trim.fastq.gz SLIDINGWINDOW:4:15 MINLEN:25 LEADING:3 TRAILING:3 ILLUMINACLIP:NexteraPE-PE.fa:2:40:15
 
-        touch downtrim_logfiles/$sample.trimmed.done
-else
-        echo:trimmomatic failed
-        fi
+#        touch downtrim_logfiles/$sample.trimmed.done
+#else
+#        echo:trimmomatic failed
+#        fi
 ```
 
 ##Making a pipeline to run breseq
-This pipeline could have been attached to the trimmomatic pipeline, but I prefer to run fastQC on some of the trimmed samples to ensure the trimmins is successful. 
+This pipeline could have been attached to the trimmomatic pipeline, but we prefered to run fastQC on some of the trimmed samples to ensure the trimming is successful. breseq mutation calling for each sample (1000x coverage, 167k bp) takes 40 minutes. 
 
 ```{r}
 #Now we make a pipeline to run breseq:
-nano pipelines/breseq_pipe.sh
-chmod +x breseq_pipe.sh
-#Anddd running the pipeline
-./runTheseJobsSerially.sh ./pipelines/breseq_pipe.sh SRA_seqs.txt
-
-#The pipeline starts below: 
-
-#!/bin/bash
-set -e # this makes the whole script exit on any error.
-sample=$1
-mkdir -p breseq_files
-if [ -e downtrim_logfiles/$sample.trimmed.done ]
-then
-        #Going to run breseq on it
-        mkdir -p breseq_files/$sample
-        #Running the breseq command:
-        # breseq -p -r sequence.gb -o /home/elyall_bmeg22/final_project/breseq_files/$sample/ trimmomatic_files/$sample/${sample}_1.trim.fastq.gz trimmomatic_files/$sample/${sample}_2.trim.fastq.gz
-        touch downtrim_logfiles/$sample.breseq.done
-else
-        echo:breseq failed
-        fi
+# nano pipelines/breseq_pipe.sh
+# chmod +x breseq_pipe.sh
+# #Anddd running the pipeline
+# ./runTheseJobsSerially.sh ./pipelines/breseq_pipe.sh SRA_seqs.txt
+# 
+# #The pipeline starts below: 
+# 
+# #!/bin/bash
+# set -e # this makes the whole script exit on any error.
+# sample=$1
+# mkdir -p breseq_files
+# if [ -e downtrim_logfiles/$sample.trimmed.done ]
+# then
+#         #Going to run breseq on it
+#         mkdir -p breseq_files/$sample
+#         #Running the breseq command:
+#         # breseq -p -r sequence.gb -o /home/elyall_bmeg22/final_project/breseq_files/$sample/ trimmomatic_files/$sample/${sample}_1.trim.fastq.gz trimmomatic_files/$sample/${sample}_2.trim.fastq.gz
+#         touch downtrim_logfiles/$sample.breseq.done
+# else
+#         echo:breseq failed
+#         fi
 ```
 
 
 #breseq mutation calling has finished!
 Typically at this point we would run a single line of breseq code that would filter all the mutations we found against the ancestral sequence.
 
-However, the author's didn't actually share the data for the ancestral sample, which is supposed to be compared against the experimental sample, and have common mutations filtered out. 
+This line would be:
+gdtools APPLY –f GENBANK –o updated.gbk –r reference.gbk ancesntral_input_sample.gd
+This takes makes a new annotated genome (gbk file) contianing all the mutations that are found in the reference sequence. Future samples would be compared against this updated gbk file using the gdtools ANNOTATE or COMPARE functions. 
+
+However, the author's didn't actually share the data for the ancestral sample, which is supposed to be compared against the experimental sample, and have common mutations filtered out. We emailed the author for these files but nothing came. 
 This is a bit of an issue for us- keeping all of these mutations in, most of which are from the ancestor, makes it difficult compare data against the paper, and focus on the mutations which are important. 
 As a proxy for filtering against the ancestral sequence, we are going to filter against the final list of mutations the authors have provided in their supplementary table. 
 
 We discussed these changes with Carl and he said we would not lose difficultly score points here. 
+In our conclusion, we will compare our results with those of the paper. 
 
+Another piece of information we will need is which E.Coli population each T4 sample evolved on (E.coli C, E.coli K12, or mixed.)
+This detail can be found by looking at the sample descriptions on the NCBI https://www.ncbi.nlm.nih.gov/sra/?term=PRJNA578899 
+The SRA # number is matched to the experimental name and population below: 
 
-Defining which sample is what- this is what Eric has found so far:  
-SRR 61 = 55D18R1 # E coli K12
-SRR 60 = 55D18R2 #E coli K12
-SRR 59 = CD18R1 #E coli C
-SRR 58 =CD18R2 #E coli C
-SRR 57 = CD18R3 #E coli C
-SRR 56 = CD18R4 #E coli C
-SRR 55 = CD18R5 #E coli C
-SRR 54 = 55D18R3 # E coli K12
-SRR 53 = 55D18R4 # # E coli K12
-SRR 52 = 55D18R5 # E coli K12
-SRR 51 = 55CD18R1  # alternating e.coli C and K12
-SRR 50 = 55CD18R2 # alternating e.coli C and K12
-SRR 49 =55CD18 R3 # alternating e.coli C and K12
-SRR 48 = 55CD18R4 # alternating e.coli C and K12
-SRR 47 = 55CD18R5 # alternating e.coli C and K12
+SRR 61 = 55D18R1 # E coli K12 replicate 1
+SRR 60 = 55D18R2 #E coli K12 replicate 2
+SRR 59 = CD18R1 #E coli C replicate 1
+SRR 58 = CD18R2 #E coli C replicate 2
+SRR 57 = CD18R3 #E coli C replicate 3
+SRR 56 = CD18R4 #E coli C replicate 4
+SRR 55 = CD18R5 #E coli C replicate 5
+SRR 54 = 55D18R3 # E coli K12 replicate 3
+SRR 53 = 55D18R4 # # E coli K12 replicate 4
+SRR 52 = 55D18R5 # E coli K12 replicate 5
+SRR 51 = 55CD18R1  # alternating e.coli C and K12 replicate 1
+SRR 50 = 55CD18R2 # alternating e.coli C and K12 replicate 2
+SRR 49 =55CD18 R3 # alternating e.coli C and K12 replicate 3
+SRR 48 = 55CD18R4 # alternating e.coli C and K12 replicate 4
+SRR 47 = 55CD18R5 # alternating e.coli C and K12 replicate 5
 
 
 #Annotating our mutations & filtering against the supplementary table: (done)
@@ -346,59 +351,42 @@ In total we have 192 surviving mutations, compared to the 174 reported in the pa
 This is much better than what we had before filtering, which was 3197 mutations (most of which are probably from the ancestor)
 
 This means many of the mutations were shared between our data and the paper's data. 
-We may have more mutations because the there could be mutations that we have (ancestral or otherwise) which share the same position. As we have no way of 
-distinguishing these, we will leave them in for our analysis
+We may have more mutations because the there could be mutations that we have (ancestral or otherwise) which share the same position. As we have no way of distinguishing these, we will leave them in for our analysis
 
 
-#Finding the number of unique mutations: (unfinished)- Jake try this if you want, but it's a lower priority# dwbi
+#Finding the number of fixed an non-fixed mutations (Make the figure from the paper @Jake)
 ```{r}
-
-#Jake you can try this if you want. If you can somehow do the above filtering on a gd file directly, you can then do gdtools COMPARE, grab the html file and work from there. I'm not great at filtering shit in bash
-#ONce you got the compare file use the code below. Alternatively, you can just hack at the filtered_all_ann dataframe & look for isolated mutations. Be careful thoug- sometimes there can be two types or mutations at a position.  
-sub_mutation_df <- mutation_df[c(3:17)]
-#Now we can transpose the dataframe: 
-trans_sub_mut_df <- data.frame(t(sub_mutation_df))
-#Now we can count the number of columns with only one element (representing only one sample with a mutation) in that row:
-trans_cols <- colnames(trans_sub_mut_df)
-unique_mutations <- 0
-for(name_of_col in trans_cols)
-{
-        if((15-sum(is.na(trans_sub_mut_df[name_of_col])))== 1){
-                unique_mutations <- unique_mutations +1
-        }
-        
-}
+#some code here.
 
 ```
 
 
-#Annotating our mutation list with functional gene categories (done)
-Now we are going to further annotate our mutation list with the gene functional categories. The authors of this paper took functional gene categories from a paper by Miller et al. We've downloaded these functional gene categories and will used them for annotation.
+#Annotating our mutation list with functional gene categories 
+Now we are going to further annotate our mutation list with the gene functional categories. The authors of this paper took functional gene categories from a paper by Miller et al. We've downloaded these functional gene categories into an excel file, added it to the supplementary table and will used them for annotation.
 ```{r}
-#Adding a column with functional categories.
-
 #First we have to upload each functional category and their associated genes. These designations are taken from the a paper by Miller et al, which was used in this study. 
+#The "functional designations" are: Transcription, Translation, Nucleotide_metabolism, DNA_rep, Virion_prots, chaperonins, lysis, host_phage_int	host_alt, homing_endonuclease, predicted_integral_membrane
+#Any gene that doesn't fit in one of these categories is classified as unknown.
 
 library(openxlsx)
 func_des <- read.xlsx("Supplementary table 2a & 2b.xlsx",sheet = 'melt_cat_genes')
-func_des_df <- as.data.frame(func_des)
+func_des_df <- as.data.frame(func_des) #functional designation dataframe contains functional categories and their genes. 
 
 #Now, we can annotate all of our mutation with their matching functional designation. 
 #If no functional designation is found, we will label it as unknown
 
 #we are going to filter through each gene, and assign a gene designation to it:
-all_genes <- filtered_all_ann$gene_name
-all_genes_func <- c()
+all_genes <- filtered_all_ann$gene_name #geting a list of all the genes in our annotated mutation calls from each sapmle
+all_genes_func <- c() #Creating an empty vector where associated functional categories will be added
 for(gene in all_genes)
 {
-        r <- which(func_des_df$gene == gene)
-        if(length(r)==0){
-                all_genes_func <- c(all_genes_func,"unknown")
+        r <- which(func_des_df$gene == gene) #getting a list of rows where the mutated gene is associated iwth a functional category
+        if(length(r)==0){ #if we can't find a funcional category associated with the gene
+                all_genes_func <- c(all_genes_func,"unknown") #Say the gene function is unknown
         }
         else{
-                all_genes_func <- c(all_genes_func,func_des_df$function_cat[r])
+                all_genes_func <- c(all_genes_func,func_des_df$function_cat[r]) #otherwise, add the functional category
         }
-                
 }
 
 #Adding the vector containing all the gene functional designations to our datframe
@@ -406,26 +394,27 @@ filtered_all_ann$gene_function <- all_genes_func
 ```
 
 
-#Calculating mutations per functional category: (done)
-Now we can start looking at mutations as thy relate to functional categories: 
+#Calculating mutations per functional category: 
+Now we can start looking at mutations as they relate to functional categories. As with the paper, mutations are dominated by those in the virion protein category. This makes sense- modifying virion proteins is one of the easier ways for phage to increase their infection efficiency over a long period of evolution. Viron proteins (like tail fibers) facilitate entry into E.coli
 
 ```{r}
 #Finding the number of mutations per functional category:
 library(tibble)
-mut_per_func <- filtered_all_ann %>% group_by(gene_function) %>% summarise(n=n()) %>% arrange(desc(n))
 library(ggplot2)
-ggplot(mut_per_func, aes(x="",y=n,fill = gene_function))+ geom_bar(width = 1, stat = "identity")
+mut_per_func <- filtered_all_ann %>% group_by(gene_function) %>% summarise(n=n()) %>% arrange(desc(n))
+ggplot(mut_per_func, aes(x="",y=n,fill = gene_function))+ geom_bar(width = 1, stat = "identity")+ ylab("Number of mutations")+ xlab("All mutation frequencies")
 
 
 #Finding the number of higher-frequency mutations (greater than 50%) per functional category:
 high_freq <- filtered_all_ann %>% filter(frequency > .5)
 high_f_mut_func <- high_freq %>% group_by(gene_function) %>% summarise(n=n()) %>% arrange(desc(n))
-ggplot(high_f_mut_func, aes(x="",y=n,fill = gene_function))+ geom_bar(width = 1, stat = "identity")
+ggplot(high_f_mut_func, aes(x="",y=n,fill = gene_function))+ geom_bar(width = 1, stat = "identity") + ylab("Number of mutations") + xlab("Mutations greater than 50% frequency")
 
 
 ```
 
-#Comparing mutations by type (unfinished) Jake do this
+#Comparing mutations by type
+Next we will get a breakdown of what kinds of mutations occured in our dataset. From the annotated mutation file, we get information on wheter the mutation was an indel, SNP or substitution. We also get details on the impact of these mutations (whether they are synonymous, non-synonymous, non-sense or intergenic).
 ```{r}
 #JAKE DO THIS!!
 
@@ -462,31 +451,33 @@ p
 
 ```
 
+#Finding the number of mutations that are fixed and not fixed. @Jake can you give this a go?
+```{r}
+# trying to generate the stacked bar graph by variant as in the paper 
 
-#Calculating relative mutation rates (in progress)
+```
+
+#Calculating relative mutation rates part #1: 
 
 The next task is to compare the relative mutation rates across each functional category. A mutation rate is defined as the # of mutations / size of functional category (in BP). 
-The paper used functional catagories taken from the 2003 Miller et al. paper
-We downloaded a list of T4 genes, and a list of the genes in each functional catagory from Miller's paper. 
-
-We first need to find the size of each functional category in base pairs. This size will allow us to calculate the mutation rate. 
+The paper used functional categories taken from the 2003 Miller et al. paper. We downloaded a list of T4 genes and their lengths in BP, in addition to the list we already have of genes that make up the functional categories from Miller's paper. 
+We first need to find the size of each functional category in base pairs. This size will allow us to calculate the mutation rate per functional category. 
 ```{r}
 
 #Downloading the a list of T4 genes and their sizes from the Miller et al. paper into a dataframe
 t4_genes <- read.xlsx("Supplementary table 2a & 2b.xlsx",sheet = 'T4_genes')
 
-#we are going to add a new column to the dataframe func_des_df that containes the gene length. 
-#Some genes have multipl exons- in this case we will add them up
+#we are going to add a new column to the dataframe func_des_df that contains the gene length. 
+#Some genes have multiple exons- in this case we will add them up
 gene_length <- c()
 
-#Iterating through all of the genes in our functionl categoreis from Miller et al.
+#Iterating through all of the genes in our functional categories from Miller et al.
 for(gene in func_des_df$gene){
         r <- which(t4_genes$gene == gene) #getting a list of rows with the gene name
         #If the gene isn't found, append a length of zero and print the gene for a manual check to see if it truly does not exist
         if(length(r)==0){ 
                 gene_length <- c(gene_length,0)
-                print("Gene not found")
-                print(gene)
+                
         }
         else{ #If the gene is found
                 #There may be multiple gene exons with the same name, will add lengths
@@ -499,28 +490,24 @@ for(gene in func_des_df$gene){
 }
 #Adding this vector to the functional designation dataframe
 func_des_df$gene_length <- gene_length 
+#Now, we have a dataframe with three colums: functional category, gene, and gene length
 
 ```
 
-
 Now we can get the mutation rate for each sample across each functional category. This will allow us to preform an anova to find the effect of functional category and sample population (E.coli C, E.coli K12, alternating) of the mutation rate
 
-#Jake- we need to make this into a function and run it on all mutations, synonymous mutations (SNP's only), and non-synonymous (SNP's only)
+#Creating a function to run a non-parametric ANOVA 
+Here we made a function that runs an anova comparing mutation rates across functional gene categories and sample populations. This will tell us if certain factors a) the functional category, b) the bacteria strain phage evolved on or c) an interaction between these affects how likely a sample is to mutate. We used a non-parametric ANOVA because the data is not normally distributed, with some small sample sizes in specific functional categories. 
 
 ```{r}
-fahrenheit_to_celsius <- function(temp_F) {
-  temp_C <- (temp_F - 32) * 5 / 9
-  return(temp_C)
-}
-fahrenheit_to_celsius(32)
-
 library(rcompanion)
 library(reshape2)
 library(vctrs)
 library(dplyr)
 
 SRHanova <- function(filtered_all_ann, func_des_df) {
-  #We will start by making a dataframe where each column is a fucntional category, each row is a sample and values are # of mutations: 
+
+#We will start by making a dataframe where each column is a fucntional category, each row is a sample and values are # of mutations: 
 
 #Creating an empty dataframe no # mutations per functional category. There are 11 funcitonal categories + 1 category for unknown + 1 category for what population the sample is, and 15 E.coli samples. 
 n_mut_per_fcn_cat_df <- data.frame(matrix(ncol =length(unique(func_des_df$function_cat))+1, nrow = length(unique(filtered_all_ann$title))) )
@@ -566,14 +553,19 @@ melted_mut_fcn_catdf <- melt(n_mut_per_fcn_cat_df)
 #Renaming the columns to something we can understand:
 melted_mut_fcn_catdf <- melted_mut_fcn_catdf %>% rename(functional_category = 1, mutation_rate = 2)
 
+#Now we need to add a third column delineating what population of bacteria the mutation rate occcured in. We can do this by making a dictionary, an matchin the row names from or n_mut_per_fcn_cat_df and then creating a vector out of this. We can then mutiply the vector to reach the lengthed of the melted dataframe. 
+
+#Setting up a dictionary to make sample rownames to their bacteria populations
 b_pop_dict <- c("47_output" = 'Alternating C & K12', "48_output" = 'Alternating C & K12', "49_output" = 'Alternating C & K12', "50_output" ='Alternating C & K12', "51_output" = 'Alternating C & K12', "52_output"= 'E.coli K12', "53_output" = 'E.coli K12', "54_output" = 'E.coli K12', "55_output" ='E.coli C' , "56_output" ='E.coli C' , "57_output"= 'E.coli C', "58_output"= 'E.coli C' , "59_output"= 'E.coli C' , "60_output" = 'E.coli K12', "61_output" ='E.coli K12' )
 
+#Creating a vector of bacteria populations 
 b_pop <- c()
 output_names <- rownames(n_mut_per_fcn_cat_df)
 for(output_name in output_names){
   b_pop <- c(b_pop,b_pop_dict[output_name])
 }
-#Now making a vector containing the population designations: 
+
+#Now making a vector containing the population designations to add to the melted dataframe: 
 bact_pop <- vec_rep(c(b_pop),ncol(n_mut_per_fcn_cat_df))
 
 melted_mut_fcn_catdf$bact_pop <- bact_pop #Adding the bacterial population to the dataframe
@@ -581,8 +573,13 @@ melted_mut_fcn_catdf$bact_pop <- bact_pop #Adding the bacterial population to th
 scheirerRayHare(mutation_rate ~ functional_category + bact_pop, data = melted_mut_fcn_catdf)
   
   }
+```
 
-print("no removals")
+#Running a non-parametric ANOVA on all mutations, synonymous mutations and non-synonymous mutations.
+Using the SRHanova function we created above, we can run an anova on three subsets of mutations: 1) all mutations, 2) synonymous mutations, 3) non-synonymous mutaitons. The paper did this same ANOVA to demonstrate that no matter the mutation type, the functional category was most important in determining mutation rates. 
+Our anova results found significant p-values for functional categories (p ~ 0.00). The E.coli strain phage evolved in had no significant affect on the mutation rate. These results were consistent with all mutations, synonymous mutations, and non-synonymous mutations. 
+```{r}
+print("Running ANOVA on all mutations")
 SRHanova(filtered_all_ann,func_des_df) #no removals
 filtered_all_ann_noNonSNP <- filtered_all_ann[filtered_all_ann$type == 'SNP',]
 filtered_all_ann_synonymous <- filtered_all_ann_noNonSNP[filtered_all_ann_noNonSNP$snp_type == 'synonymous',]
@@ -591,35 +588,22 @@ print("synonymous only")
 SRHanova(filtered_all_ann_synonymous,func_des_df)
 print("nonsynonymous only")
 SRHanova(filtered_all_ann_nonsynonymous,func_des_df)
-
-```
-
-```{r}
-# trying to generate the stacked bar graph by variant as in the paper 
-
-```
-
-Now we have a dataframe containing mutations rates for each functional category as a column with samples as each rows. 
-We will then do a ANOVA to determine which the effect of sample population (whether the sample evolved with Ecoli C, K12, or mixed), functional category or the interaction between the two on the mutation rate. 
-The paper used an SRH non-parametric two-way ANOVA for this analysis, as the data is not normally distributed. 
-```{r}
-
-
-
 ```
 
 
-#Plotting mutations across the genome: Jake- can you make this look more like the paper's figure? Add some horizontal lines, label which one is which replicate, make sure we have the same categories if possible, do the empty / filled triangles?
-Our last task will be to graph the mutations for each sample across then entire genome length. This will tell us if there's any similarity between samples, and we can also compare against the original figure here. 
+#Plotting mutations across the genome for each sample:
+Our last task will be to graph the mutations for each sample across then entire genome length. This will tell us if there's any similarity between samples, and we can also compare against the original figure here. We
 ```{r}
 #We are going to try and do this with a scatter plot, using the x- axis as position of the mutation in the genome. We will make the y-axis a different fixed number for each sample. 
 
 #install.packages("ggpubr")
+library(ggpubr)
 ggpubr::show_point_shapes()
-#First we will make a dictionary with y-axis values for each of the sample names: 
-#y_axis_dict <- c("47_output" = 5, "48_output" = 10, "49_output" = 15, "50_output" =20, "51_output" = 25, "52_output"= 30, "53_output" = 35, "54_output" = 40, "55_output" =55 , "56_output" =60 , "57_output"= 65, "58_output"= 70 , "59_output"= 75 , "60_output" = 45, "61_output" =50 )
+
+
 #First we will make a dictionary with y-axis values for each of the sample names: 
 y_axis_dict <- c("47_output" = 1, "48_output" = 2, "49_output" = 3, "50_output" =4, "51_output" = 5, "52_output"= 1, "53_output" = 2, "54_output" = 3, "55_output" =4 , "56_output" =5 , "57_output"= 1, "58_output"= 2, "59_output"= 3, "60_output" = 4, "61_output" =5 )
+
 #Now we are going to add a new column to the "filtered_all_ann" dataframe which contains the y-axis value corresponding to each sample name. 
 mutation_y_axis_vals <- c()
 output_names <- filtered_all_ann$title
@@ -630,7 +614,6 @@ for(output_name in output_names){
 filtered_all_ann$y_ax_val <- mutation_y_axis_vals #Adding this to our mutation dataframe
 
 # doing the same thing for bacterial populations
-
 b_pop_dict <- c("47_output" = 'Alternating C & K12', "48_output" = 'Alternating C & K12', "49_output" = 'Alternating C & K12', "50_output" ='Alternating C & K12', "51_output" = 'Alternating C & K12', "52_output"= 'E.coli K12', "53_output" = 'E.coli K12', "54_output" = 'E.coli K12', "55_output" ='E.coli C' , "56_output" ='E.coli C' , "57_output"= 'E.coli C', "58_output"= 'E.coli C' , "59_output"= 'E.coli C' , "60_output" = 'E.coli K12', "61_output" ='E.coli K12' )
 
 population_y_axis_vals <- c()
@@ -652,3 +635,10 @@ p + facet_grid(population_name ~ .)
 
 
 #Conclusion:
+
+Overall we reached similar findings to the Pham et al. paper. We found that most of the mutations were dominated by structural genes. Further, these mutations were donminated by a few structural genes in particular.
+Our final genome mutation plot does not look identical to the one in Pham et al's paper. This is likely because we did not have access to the ancestral sample. When we initially filtered our mutations against those reported in their supplementary table, it's possible we lost some mutations. 
+
+and that the bacterial strain phage evolved in did not make a consistent different in the mutation profile. 
+
+
