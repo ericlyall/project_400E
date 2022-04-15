@@ -11,7 +11,8 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Introdution
+# Introdution
+
 The paper we are reviewing is called "Experimental evolution for niche breadth in bacteriophage T4 highlights the importance of structural genes". It was the doctoral thesis for Jenny Pham at the Department of Organismic and Evolutionary Biology at Harvard University.. This paper anayzed the evolution of T4 bacteriophage, which is a lytic virus that infects E.coli.
 The purpose of this paper was to gain a better understanding of "niche breadth evolution". Researchers wanted to understand how growing T4 bacteiophage in different niches (different E.coli strains) drives evolution. Specifically, this paper looked at what kind of genes were likely to mutate, and how the niche influence mutations. 
 
@@ -28,17 +29,22 @@ We want to demonstrate that mutation in structural genes drive evolution of the 
 We chose this analysis because it is very similar to what one team member (Eric Lyall) will have to for the Tropini Lab this summer. This analysis also makes use of a new mutation-calling tool called breseq, which neither of us have had previous exposure to. We are also completely unfamiliar working with microbial genomes, as we have only done human genomes in this course. 
 
 
-#Methods: 
+# Methods: 
 
 ## Downloading the reference genome:
 
 We need to download the reference genome to use as a comparison while searching for mutations. The reference genome can be downloaded from NCBI here: https://www.ncbi.nlm.nih.gov/nuccore/NC_000866
 Following the instructions from the breseq website, we first need to make sure the "show sequence" box is selected, so that we download the sequence as well as the features:
-![Accessing reference genome on GeneBank](GenBank.png)
+![Accessing reference genome on GeneBank](GenBank.png) 
+
 At this point, we can click the "send to" button and download the file as a genebank file (.gb)
+
 ![Accessing reference genome on GeneBank](GenBankDownload.png)
+
 Using scp, we can trasfer the file over to our cluster: 
+
 ```{r pressure, echo=FALSE}
+library(formatR)
 #scp sequence.gb elyall_bmeg22@orca1.bcgsc.ca:/home/elyall_bmeg22/final_project/paired
 ```
 
@@ -50,20 +56,26 @@ After transferring over the file, we need to check to make sure it contains the 
 
 #We are able to see the nucleotide seqeunce here!
 ```
+
 ![Accessing reference genome on GeneBank](view_genebank_file.png)
 We have sucessfully downloaded the reference genome! 
 
-#Mutation calling pipeline for a single sample:
+# Mutation calling pipeline for a single sample:
 We will now overview the data analysis pipeline for a single sample (SRR10323947). 
 This consists of
-1) downloading the fastq files from SRA
-2) Running fastqc on the fastq files
+1) downloading the fastq files from SRA 
+
+2) Running fastqc on the fastq files 
+
 3) Using trimmomatic to clean up are fastq files and remove the illumina adapters. 
-4) Running fastqc again on the trimmed samples to confirm trimmmatic was sucessful
+
+4) Running fastqc again on the trimmed samples to confirm trimmmatic was sucessful 
+
 5) Running breseq to find mutations relative to the T4 bacteriophage reference genome. 
 
 After this section, we will develop a series of pipelines that does all of this together. 
-## Step 1: Downloading the fastq file from SRA:
+
+## Step 1: Downloading the fastq file from SRA: 
 
 The first step is to download the sequences for each of the 15 samples from SRA. 
 
@@ -76,7 +88,7 @@ The first step is to download the sequences for each of the 15 samples from SRA.
 ```
 
 
-#Step 2: Quality control- Running fastqc on the the fastq file: 
+# Step 2: Quality control- Running fastqc on the the fastq file:  
 
 We can use fastQC to check the quality of our files. This checks the quality scores of our sequences, and tells us if there is unexpected coverage, adapter content or unknown nucleotides. This needs to be run on both the forwards and reverse reads.
 ```{r}
@@ -84,11 +96,16 @@ We can use fastQC to check the quality of our files. This checks the quality sco
 ```
 
 The read quality drops off significantly near the ends of reads. This means we will have to use trimmomatic to remove some of the poor quality bases near the end of every read. This allows downstream analysis with breseq to only work with high quality data. 
+
 ![Base quality has significant drop off near the ends of reads](fastqc_example.png)
 
-##Step 3: Quality control- Using trimmomatic to filter the fastq file and remove illumina adapters. 
+
+## Step 3: Quality control- Using trimmomatic to filter the fastq file and remove illumina adapters. 
+
 Next we can use trimmomatic to trim off the adapter sequences and poor reads near the end. The paper mentions: "Demultiplexed reads were trimmed for Nextera adapter sequences using Trimmomatic with default settings". We also have to trim off the illumina adapters from our reads, as shows in the photo below
+
 ![Adapters to get rid of](fastqc_adapters_to_trim.png)
+
 
 ```{r}
 #conda install -c bioconda trimmomatic
@@ -119,14 +136,15 @@ Next we can use trimmomatic to trim off the adapter sequences and poor reads nea
 
 ```
 
-## Step 4: Quality control- running an additional fastqc to confirm the adapter sequences are removed: 
+## Step 4: Quality control- running an additional fastqc to confirm the adapter sequences are removed:  
 We now need to run fastq again on our trimmed sample to confirmed if the adapter contents are actually removed. 
 ```{r}
 #fastqc SRR10323947_1.trim.fastq.gz
 ```
 You can see the the nextera adapter content is now removed. Since the authors did not make any additional adjustments, neither will we. 
 ![After cleaning up the adapter content](cleaned_adapters.png)
-## Step 5: Running breseq to call mutations on our sample
+## Step 5: Running breseq to call mutations on our sample 
+
 The next step is to download and run breseq. breseq is a pipeline that is best for calling mutations on small microbial genomes. It starts by aligning the reads to a reference sequence, and then looks for consistent mismatches. 
 Breseq can be run in "population mode" with the -p flag. This is used when a heterogeneous population is sequences, and one wants to find all of the possible mutations against a reference sequence. If greater than 5% of the reads at a given position mismatch, breseq reports a mutation at this position. 
 breseq will report all of the mutations, their frequencies and positions. It also looks at the reading frame and determines if mutations are synonymous or non-synonymous, and identified deletions, insertions and SNP's. Using the genome annotation from the reference sequence, breseq will report what gene the mutation occurs in and the function of that gene if it's available. These features make breseq and incredibly useful tool for analyzing mutations in microbial sequences. 
@@ -146,22 +164,30 @@ breseq will report all of the mutations, their frequencies and positions. It als
 Let's look at some of the output files of our breseq data!
 
 Breseq gives us summary information for each sample. This lets us know that most of our read are mapped. Breseq requires 90% of a reads length to map. 
-![breseq summary information](summary_info.png)
+
+![breseq summary information](summary_info.png) 
+
 
 Breseq also give a list of mutation predictions for each sample:
 
-![breseq mutation predictions](sample_output.png)
-If you click on the evidence, it will show you all of the reads mapping to that position, and highlight the exptcted mutation. 
-![breseq alignment evidence](align_evidence.png)
+![breseq mutation predictions](sample_output.png) 
 
-We can see our coverage is close to 1000 base pairs on average (which is what the authors aimed to seqeunce at). Breseq highlights 
+If you click on the evidence, it will show you all of the reads mapping to that position, and highlight the exptcted mutation. 
+
+![breseq alignment evidence](align_evidence.png) 
+
+
+We can see our coverage is close to 1000 base pairs on average (which is what the authors aimed to seqeunce at). 
+
 ![breseq coverage example](Coverage_example.png)
 
 
-#Creating pipeline to preform analysis on all 15 samples:
+# Creating pipeline to preform analysis on all 15 samples:  
+
 This section contains a combination of pipelines that will ultimately run mutation calling on all 15 of our samples
 
-##Downloading all of the SRA names from NIH:
+## Downloading all of the SRA names from NIH:  
+
 Making a textfile containing all of the SRA names
 ```{r}
 #First we have to download the acession list as a txt file form NCBI
@@ -173,7 +199,8 @@ Making a textfile containing all of the SRA names
 
 ```
 
-##Creating a pipeline that downloads fastq files and runs fastQC on them
+## Creating a pipeline that downloads fastq files and runs fastQC on them
+
 Now, we are going to generate a pipeline that downloads the fastq files and runs fastQC on each of these.
 Normally we would use a job scheduler to do this, but apparently our server can't do this.
 So we will used Dr. De Boer's script which runs a script for each line in an input file
@@ -230,7 +257,9 @@ The script is here: (https://raw.githubusercontent.com/BMEGGenoInfo/Assignments/
 
 ```
 
-#Making a trimmomatic pipeline for all samples
+# Making a trimmomatic pipeline for all samples 
+
+
 We found no additional concerns beyond the ones mention with our pilot sample in the fastQC.
 Before running a trimmomatic pipeline on all of the samples, we have to gzip the files. 
 
@@ -264,7 +293,8 @@ Below is the code for our trimmomatic pipeline
 #        fi
 ```
 
-##Making a pipeline to run breseq
+## Making a pipeline to run breseq 
+
 This pipeline could have been attached to the trimmomatic pipeline, but we prefered to run fastQC on some of the trimmed samples to ensure the trimming is successful. breseq mutation calling for each sample (1000x coverage, 167k bp) takes 40 minutes. 
 
 ```{r}
@@ -293,7 +323,8 @@ This pipeline could have been attached to the trimmomatic pipeline, but we prefe
 ```
 
 
-#breseq mutation calling has finished!
+# breseq mutation calling has finished! 
+
 Typically at this point we would run a single line of breseq code that would filter all the mutations we found against the ancestral sequence.
 
 This line would be:
@@ -311,27 +342,44 @@ Another piece of information we will need is which E.Coli population each T4 sam
 This detail can be found by looking at the sample descriptions on the NCBI https://www.ncbi.nlm.nih.gov/sra/?term=PRJNA578899 
 The SRA # number is matched to the experimental name and population below: 
 
-SRR 61 = 55D18R1 # E coli K12 replicate 1
-SRR 60 = 55D18R2 #E coli K12 replicate 2
-SRR 59 = CD18R1 #E coli C replicate 1
-SRR 58 = CD18R2 #E coli C replicate 2
-SRR 57 = CD18R3 #E coli C replicate 3
-SRR 56 = CD18R4 #E coli C replicate 4
-SRR 55 = CD18R5 #E coli C replicate 5
-SRR 54 = 55D18R3 # E coli K12 replicate 3
-SRR 53 = 55D18R4 # # E coli K12 replicate 4
-SRR 52 = 55D18R5 # E coli K12 replicate 5
-SRR 51 = 55CD18R1  # alternating e.coli C and K12 replicate 1
-SRR 50 = 55CD18R2 # alternating e.coli C and K12 replicate 2
-SRR 49 =55CD18 R3 # alternating e.coli C and K12 replicate 3
-SRR 48 = 55CD18R4 # alternating e.coli C and K12 replicate 4
-SRR 47 = 55CD18R5 # alternating e.coli C and K12 replicate 5
+SRR 61 = 55D18R1 # E coli K12 replicate 1 
+
+SRR 60 = 55D18R2 #E coli K12 replicate 2 
+
+SRR 59 = CD18R1 #E coli C replicate 1 
+
+SRR 58 = CD18R2 #E coli C replicate 2 
+
+SRR 57 = CD18R3 #E coli C replicate 3 
+
+SRR 56 = CD18R4 #E coli C replicate 4 
+
+SRR 55 = CD18R5 #E coli C replicate 5 
+
+SRR 54 = 55D18R3 # E coli K12 replicate 3 
+
+SRR 53 = 55D18R4 # # E coli K12 replicate 4 
+
+SRR 52 = 55D18R5 # E coli K12 replicate 5 
+
+SRR 51 = 55CD18R1  # alternating e.coli C and K12 replicate 1 
+
+SRR 50 = 55CD18R2 # alternating e.coli C and K12 replicate 2 
+
+SRR 49 =55CD18 R3 # alternating e.coli C and K12 replicate 3 
+
+SRR 48 = 55CD18R4 # alternating e.coli C and K12 replicate 4 
+
+SRR 47 = 55CD18R5 # alternating e.coli C and K12 replicate 5 
 
 
-#Annotating our mutations & filtering against the supplementary table:
+
+# Annotating our mutations & filtering against the supplementary table: 
+
 To get more detail on our mutations, we can used the ANNOTATE function from breseq's gdtools. The ANNOTATE tool acts on .gd files. .gd files are tab-delineated files describing differences between a reference genome and the tested samples. Currently, our .gd files only contain detail on what gene was mutated, the base piar change and the positions. We need more detail for our analysis.  
 The ANNOTATE tool creates an annotated file that adds detail to each mutation found, including the type (e.g SNP), and whether is synonymous or non-synonymous. The ANNOTATE function used the reading frame from the reference equence and determines if the amino acid changes based on nucleotide changes. 
 We can save this data in a tsv file, where each line contains a mutation from a sample. 
+
 ```{r}
  
 #gdtools ANNOTATE -o annotated_all.tsv -f TSV -r reference_seq.gb 47_output.gd 48_output.gd 49_output.gd 50_output.gd 51_output.gd 52_output.gd 53_output.gd 54_output.gd 55_output.gd 56_output.gd 57_output.gd 58_output.gd 59_output.gd 60_output.gd 61_output.gd
@@ -358,7 +406,8 @@ This is much better than what we had before filtering, which was 3197 mutations 
 This means many of the mutations were shared between our data and the paper's data. 
 We may have more mutations because the there could be mutations that we have (ancestral or otherwise) which share the same position. As we have no way of distinguishing these, we will leave them in for our analysis
 
-#Annotating our mutation list with functional gene categories 
+# Annotating our mutation list with functional gene categories  
+
 Now we are going to further annotate our mutation list with the gene functional categories. The authors of this paper took functional gene categories from a paper by Miller et al (the same paper that made the latest version of the T4 genome. We've downloaded these functional gene categories into an excel file, added it to the supplementary table and will use them for annotation.
 The purpose of annotating genes by functional category is to make data visualization eaiser. If we only have the names of specific genes, it's difficult to get a picture of what the broad themes were during the evolution of these phage. By annotating our mutations with functional categories, we are eventually able to present strong evidence that the mutations in structural viron proteins drive the niche evolution of bacteriophage. 
 ```{r}
@@ -392,7 +441,8 @@ filtered_all_ann$gene_function <- all_genes_func
 ```
 
 
-#Calculating mutations per functional category: 
+# Calculating mutations per functional category:  
+
 Now we can start looking at mutations as they relate to functional categories. As with the paper, mutations are dominated by those in the virion protein category. This makes sense- modifying virion proteins is one of the easier ways for phage to increase their infection efficiency over a long period of evolution. Viron proteins (like tail fibers) facilitate entry into E.coli, which is required for phage replication and survival. 
 
 ```{r}
@@ -411,7 +461,8 @@ ggplot(high_f_mut_func, aes(x="",y=n,fill = gene_function))+ geom_bar(width = 1,
 
 ```
 
-#Comparing mutations by type
+# Comparing mutations by type 
+
 Next we will get a breakdown of what kinds of mutations occured in our dataset. From the annotated mutation file, we get information on whether the mutation was an indel, SNP or substitution. We also get details on the impact of these mutations (whether they are synonymous, non-synonymous, non-sense or intergenic).
 The purpose of this is twofold. First, it acts as a sanity check- most of the mutations reported should be SNP's, as these are much less likely to result in a dysfuctional bacteriophage. Second, this breakdown will give us a grasp on what kind of mutations are in the dataset, aiding downstream analysis.
 ```{r}
@@ -446,7 +497,8 @@ p
 
 ```
 
-#Finding the number of mutations that are fixed and not fixed. 
+# Finding the number of mutations that are fixed and not fixed. 
+
 Next we will analyze the number of mutations that are fixed and not fixed. A fixed mutation will be defined at over 80% prevelance in the population - meaning these mutations were either essential, or associated with other essential mutations that gave the bacterophage a competitiva advantage while evolved. 
 Non-fixed mtuations will be defined as mutations with a population frequency from 5-80%. These mutations occured, but their consequences are not strong enough to either a) vanish entirely by being out competed or b) become fully ingrained in the population (fixed). 
 The pupose of doing this analysis is to see whether or not selection occured on the evolved populations. If selection occurs, we should see two things: 
@@ -485,7 +537,8 @@ p + facet_grid(cols = vars(population_name))
 
 ```
 
-#Calculating relative mutation rates part #1: 
+# Calculating relative mutation rates part #1: 
+
 
 The next task is to compare the relative mutation rates across each functional category. A mutation rate is defined as the # of mutations / size of functional category (in BP). 
 The paper used functional categories taken from the 2003 Miller et al. paper. We downloaded a list of T4 genes and their lengths in BP, in addition to the list we already have of genes that make up the functional categories from Miller's paper. 
@@ -524,10 +577,12 @@ func_des_df$gene_length <- gene_length
 
 Now we can get the mutation rate for each sample across each functional category. This will allow us to preform an anova to find the effect of functional category and sample population (E.coli C, E.coli K12, alternating) of the mutation rate
 
-#Creating a function to run a non-parametric ANOVA and Dunn's test 
+# Creating a function to run a non-parametric ANOVA and Dunn's test  
+
 Here we made a function that runs an anova comparing mutation rates across functional gene categories and sample populations. This will tell us if certain factors a) the functional category, b) the bacteria strain phage evolved on or c) an interaction between these affects how likely a sample is to mutate. We used a non-parametric ANOVA because the data is not normally distributed, with some small sample sizes in specific functional categories. 
 After running the ANOVA, we will set up a function to run Dunn's test. This will do a pairwise comparison of mutation rates for every combination of functional categories. As you'll see, only pairs containing virion proteins have a significant result.
 Ultimately, the ANOVA will show that only functional categories make a difference. The Dunn test will show that viron proteins are responsible for this difference in mutation rates. 
+
 
 ```{r}
 library(rcompanion)
@@ -611,7 +666,8 @@ DunnTest(mutation_rate~functional_category,melted_mut_fcn_catdf)
   }
 ```
 
-#Running a non-parametric ANOVA on all mutations, synonymous mutations and non-synonymous mutations.
+# Running a non-parametric ANOVA on all mutations, synonymous mutations and non-synonymous mutations.  
+
 Using the SRHanova function we created above, we can run an anova on three subsets of mutations: 1) all mutations, 2) synonymous mutations, 3) non-synonymous mutations. The paper did this same ANOVA to demonstrate that no matter the mutation type, the functional category was most important in determining mutation rates. 
 Our anova results found significant p-values for functional categories (p ~ 0.00). The E.coli strain phage evolved in had no significant affect on the mutation rate. These results were consistent with all mutations, synonymous mutations, and non-synonymous mutations. 
 The Dunn test only found significnat difference in mutation rates in functional category pairs that contains viron proteins. The shows that viron proteins is the only category that has a relatively higher mutation rate. 
@@ -628,8 +684,10 @@ SRHanova(filtered_all_ann_nonsynonymous,func_des_df)
 ```
 
 
-#Plotting mutations across the genome for each sample:
+# Plotting mutations across the genome for each sample:  
+
 Our last task will be to graph the mutations for each sample across then entire genome length. This will tell us if there's any similarity between samples, and we can also compare against the original figure here. 
+
 ```{r}
 #We are going to try and do this with a scatter plot, using the x- axis as position of the mutation in the genome. We will make the y-axis a different fixed number for each sample. 
 
