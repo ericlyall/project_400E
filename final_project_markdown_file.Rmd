@@ -526,8 +526,10 @@ func_des_df$gene_length <- gene_length
 
 Now we can get the mutation rate for each sample across each functional category. This will allow us to preform an anova to find the effect of functional category and sample population (E.coli C, E.coli K12, alternating) of the mutation rate
 
-#Creating a function to run a non-parametric ANOVA 
+#Creating a function to run a non-parametric ANOVA and Dunn's test 
 Here we made a function that runs an anova comparing mutation rates across functional gene categories and sample populations. This will tell us if certain factors a) the functional category, b) the bacteria strain phage evolved on or c) an interaction between these affects how likely a sample is to mutate. We used a non-parametric ANOVA because the data is not normally distributed, with some small sample sizes in specific functional categories. 
+After running the ANOVA, we will set up a function to run Dunn's test. This will do a pairwise comparison of mutation rates for every combination of functional categories. As you'll see, only pairs containing virion proteins have a significant result.
+Ultimately, the ANOVA will show that only functional categories make a difference. The Dunn test will show that viron proteins are responsible for this difference in mutation rates. 
 
 ```{r}
 library(rcompanion)
@@ -603,17 +605,18 @@ melted_mut_fcn_catdf$bact_pop <- bact_pop #Adding the bacterial population to th
 scheirerRayHare(mutation_rate ~ functional_category + bact_pop, data = melted_mut_fcn_catdf)
   
 
-#We can also preform a Dunn's test to determine if one functional category in particular has a significant effect mutation rate. We will do the Dunn test on the viron_prots category
+#We can also preform a Dunn's test to determine if one functional category in particular has a significant effect mutation rate. This does pairwise comparisons of each category to see if th mutation rates are different. You'll see that only comparisons with viron proteins yields significant results. 
 #install.packages("dunn.test")
 print("Running a Dunn Test now")
-library(dunn.test)
-
+library(DescTools)
+DunnTest(mutation_rate~functional_category,melted_mut_fcn_catdf)
   }
 ```
 
 #Running a non-parametric ANOVA on all mutations, synonymous mutations and non-synonymous mutations.
-Using the SRHanova function we created above, we can run an anova on three subsets of mutations: 1) all mutations, 2) synonymous mutations, 3) non-synonymous mutaitons. The paper did this same ANOVA to demonstrate that no matter the mutation type, the functional category was most important in determining mutation rates. 
+Using the SRHanova function we created above, we can run an anova on three subsets of mutations: 1) all mutations, 2) synonymous mutations, 3) non-synonymous mutations. The paper did this same ANOVA to demonstrate that no matter the mutation type, the functional category was most important in determining mutation rates. 
 Our anova results found significant p-values for functional categories (p ~ 0.00). The E.coli strain phage evolved in had no significant affect on the mutation rate. These results were consistent with all mutations, synonymous mutations, and non-synonymous mutations. 
+The Dunn test only found significnat difference in mutation rates in functional category pairs that contains viron proteins. The shows that viron proteins is the only category that has a relatively higher mutation rate. 
 ```{r}
 print("Running ANOVA on all mutations")
 SRHanova(filtered_all_ann,func_des_df) #no removals
