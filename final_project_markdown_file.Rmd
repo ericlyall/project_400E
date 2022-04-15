@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 The paper we are reviewing is called "Experimental evolution for niche breadth in bacteriophage T4 highlights the importance of structural genes". It was the doctoral thesis for Jenny Pham at the Department of Organismic and Evolutionary Biology at Harvard University.. This paper anayzed the evolution of T4 bacteriophage, which is a lytic virus that infects E.coli.
 The purpose of this paper was to gain a better understanding of "niche breadth evolution". Researchers wanted to understand how growing T4 bacteiophage in different niches (different E.coli strains) drives evolution. Specifically, this paper looked at what kind of genes were likely to mutate, and how the niche influence mutations. 
 
-Methods: The authors grew T4 bacteriophage (derived from a common ancestor) in 15 cultures of bacteria for approximately 50 generations. Each culture was passaged daily. 5 of the bacteria cultures had E.coli C, 5 had E.coli K12, and 5 had alternating populations
+Methods: The authors grew T4 bacteriophage (derived from a common ancestor) in 15 cultures of bacteria for approximately 50 generations. Each culture was passages daily. 5 of the bacteria cultures had E.coli C, 5 had E.coli K12, and 5 had alternating populations
 After 20 days, the author isolated phage population samples from each of the 15 populations and preformed whole genome sequencing on them with a coverage depth of 1000x. Then then compared the mutations from each of the samples. 
 
 The goals of our re-analysis are the following: 
@@ -23,7 +23,7 @@ The goals of our re-analysis are the following:
 4) Graphically compare mutations across different sample populations to look for similar mutation patterns
 We want to demonstrate that mutation in structural genes drive evolution of the bacteriophage. 
 
-We chose this analysis because it is very similar to what one team member (Eric Lyall) will have to for the Tropini Lab this summer. This analysis also makes use of a new mutation-calling tool called breseq, which neither of us have had previous exposure to. We are also completely unfamilair working with microbial genomes, as we have only done human genomes in this course. 
+We chose this analysis because it is very similar to what one team member (Eric Lyall) will have to for the Tropini Lab this summer. This analysis also makes use of a new mutation-calling tool called breseq, which neither of us have had previous exposure to. We are also completely unfamiliar working with microbial genomes, as we have only done human genomes in this course. 
 
 
 #Methods: 
@@ -74,9 +74,9 @@ The first step is to download the sequences for each of the 15 samples from SRA.
 ```
 
 
-#Step 2:Running fastqc on the the fastq file: 
+#Step 2: Quality control- Running fastqc on the the fastq file: 
 
-We can use fastQC to check the quality of our files. This checks the quality socres of our sequences, and tells us if there is unexpected coverage, adapter content or unkonwn nucleotides. This needs to be run on both the forwards and reverse reads.
+We can use fastQC to check the quality of our files. This checks the quality scores of our sequences, and tells us if there is unexpected coverage, adapter content or unknown nucleotides. This needs to be run on both the forwards and reverse reads.
 ```{r}
 #fastqc SRR10323947_1.fastq
 ```
@@ -84,7 +84,7 @@ We can use fastQC to check the quality of our files. This checks the quality soc
 The read quality drops off significantly near the ends of reads. This means we will have to use trimmomatic to remove some of the poor quality bases near the end of every read. This allows downstream analysis with breseq to only work with high quality data. 
 ![Base quality has significant drop off near the ends of reads](fastqc_example.png)
 
-##Step 3: USing trimmomatic to filter the fastq file and remove illumina adapters. 
+##Step 3: Quality control- Using trimmomatic to filter the fastq file and remove illumina adapters. 
 Next we can use trimmomatic to trim off the adapter sequences and poor reads near the end. The paper mentions: "Demultiplexed reads were trimmed for Nextera adapter sequences using Trimmomatic with default settings". We also have to trim off the illumina adapters from our reads, as shows in the photo below
 ![Adapters to get rid of](fastqc_adapters_to_trim.png)
 
@@ -117,14 +117,15 @@ Next we can use trimmomatic to trim off the adapter sequences and poor reads nea
 
 ```
 
-## Step 4: Running an additional fastqc to confirm the adapter sequences are removed: 
+## Step 4: Quality control- running an additional fastqc to confirm the adapter sequences are removed: 
+We now need to run fastq again on our trimmed sample to confirmed if the adapter contents are actually removed. 
 ```{r}
 #fastqc SRR10323947_1.trim.fastq.gz
 ```
-You can see the tha nextera adapter content is now removed. There are still quality control concerns, but since the authors did not make any additional adjusttments, neither will we. 
+You can see the the nextera adapter content is now removed. Since the authors did not make any additional adjustments, neither will we. 
 ![After cleaning up the adapter content](cleaned_adapters.png)
 ## Step 5: Running breseq to call mutations on our sample
-The next step is to download and run breseq. breseq is a pipeline that is best for calling mutations on small microbial genomes. It starts by allinging the reads to a reference sequence, and then looks for consistent mismatches. 
+The next step is to download and run breseq. breseq is a pipeline that is best for calling mutations on small microbial genomes. It starts by aligning the reads to a reference sequence, and then looks for consistent mismatches. 
 Breseq can be run in "population mode" with the -p flag. This is used when a heterogeneous population is sequences, and one wants to find all of the possible mutations against a reference sequence. If greater than 5% of the reads at a given position mismatch, breseq reports a mutation at this position. 
 breseq will report all of the mutations, their frequencies and positions. It also looks at the reading frame and determines if mutations are synonymous or non-synonymous, and identified deletions, insertions and SNP's. Using the genome annotation from the reference sequence, breseq will report what gene the mutation occurs in and the function of that gene if it's available. These features make breseq and incredibly useful tool for analyzing mutations in microbial sequences. 
 ```{r}
@@ -325,9 +326,10 @@ SRR 48 = 55CD18R4 # alternating e.coli C and K12 replicate 4
 SRR 47 = 55CD18R5 # alternating e.coli C and K12 replicate 5
 
 
-#Annotating our mutations & filtering against the supplementary table: (done)
-To get more detail on our mutations, we can used the ANNOTATE function from breseq's gdtools 
-This creates an annotated file that adds detail to each mutation found, including the type (e.g SNP), and whether is synonymous or non-synonymous.
+#Annotating our mutations & filtering against the supplementary table:
+To get more detail on our mutations, we can used the ANNOTATE function from breseq's gdtools. The ANNOTATE tool acts on .gd files. .gd files are tab-delineated files describing differences between a reference genome and the tested samples. Currently, our .gd files only contain detail on what gene was mutated, the base piar change and the positions. We need more detail for our analysis.  
+The ANNOTATE tool creates an annotated file that adds detail to each mutation found, including the type (e.g SNP), and whether is synonymous or non-synonymous. The ANNOTATE function used the reading frame from the reference equence and determines if the amino acid changes based on nucleotide changes. 
+We can save this data in a tsv file, where each line contains a mutation from a sample. 
 ```{r}
  
 #gdtools ANNOTATE -o annotated_all.tsv -f TSV -r reference_seq.gb 47_output.gd 48_output.gd 49_output.gd 50_output.gd 51_output.gd 52_output.gd 53_output.gd 54_output.gd 55_output.gd 56_output.gd 57_output.gd 58_output.gd 59_output.gd 60_output.gd 61_output.gd
@@ -341,28 +343,22 @@ mutation_xl <- read.xlsx("Supplementary table 2a & 2b.xlsx",sheet = 1)
 mutation_df <- as.data.frame(mutation_xl)
 
 #Filtering out the mutation in all_ann that are not in the supplementary files. This is our stand-in for not having the ancestral sequence. 
+#This filtering is done by postion- if there'a mutation called by our team that does not share the position of mutations shown in the paper, we deleted it. 
 library(tidyverse)
-filtered_all_ann <- filter(all_ann, position %in% mutation_df$position )
+filtered_all_ann <- filter(all_ann, position %in% mutation_df$position ) 
 nrow(filtered_all_ann)
 ```
 
-In total we have 192 surviving mutations, compared to the 174 reported in the paper. This means our analysis is largely successful!
+In total we have 192 surviving mutations, compared to the 174 reported in the paper. This means our analysis is largely successful! Many of the mutations we found were also found in the paper. 
 
 This is much better than what we had before filtering, which was 3197 mutations (most of which are probably from the ancestor)
 
 This means many of the mutations were shared between our data and the paper's data. 
 We may have more mutations because the there could be mutations that we have (ancestral or otherwise) which share the same position. As we have no way of distinguishing these, we will leave them in for our analysis
 
-
-#Finding the number of fixed an non-fixed mutations (Make the figure from the paper @Jake)
-```{r}
-#some code here.
-
-```
-
-
 #Annotating our mutation list with functional gene categories 
-Now we are going to further annotate our mutation list with the gene functional categories. The authors of this paper took functional gene categories from a paper by Miller et al. We've downloaded these functional gene categories into an excel file, added it to the supplementary table and will used them for annotation.
+Now we are going to further annotate our mutation list with the gene functional categories. The authors of this paper took functional gene categories from a paper by Miller et al (the same paper that made the latest version of the T4 genome. We've downloaded these functional gene categories into an excel file, added it to the supplementary table and will use them for annotation.
+The purpose of annotating genes by functional category is to make data visualization eaiser. If we only have the names of specific genes, it's difficult to get a picture of what the broad themes were during the evolution of these phage. By annotating our mutations with functional categories, we are eventually able to present strong evidence that the mutations in structural viron proteins drive the niche evolution of bacteriophage. 
 ```{r}
 #First we have to upload each functional category and their associated genes. These designations are taken from the a paper by Miller et al, which was used in this study. 
 #The "functional designations" are: Transcription, Translation, Nucleotide_metabolism, DNA_rep, Virion_prots, chaperonins, lysis, host_phage_int	host_alt, homing_endonuclease, predicted_integral_membrane
@@ -375,8 +371,8 @@ func_des_df <- as.data.frame(func_des) #functional designation dataframe contain
 #Now, we can annotate all of our mutation with their matching functional designation. 
 #If no functional designation is found, we will label it as unknown
 
-#we are going to filter through each gene, and assign a gene designation to it:
-all_genes <- filtered_all_ann$gene_name #geting a list of all the genes in our annotated mutation calls from each sapmle
+#We are going to iterate through each gene from our mutation data, and assign a gene designation to it:
+all_genes <- filtered_all_ann$gene_name #geting a list of all the genes in our annotated mutation calls from each sample
 all_genes_func <- c() #Creating an empty vector where associated functional categories will be added
 for(gene in all_genes)
 {
@@ -395,7 +391,7 @@ filtered_all_ann$gene_function <- all_genes_func
 
 
 #Calculating mutations per functional category: 
-Now we can start looking at mutations as they relate to functional categories. As with the paper, mutations are dominated by those in the virion protein category. This makes sense- modifying virion proteins is one of the easier ways for phage to increase their infection efficiency over a long period of evolution. Viron proteins (like tail fibers) facilitate entry into E.coli
+Now we can start looking at mutations as they relate to functional categories. As with the paper, mutations are dominated by those in the virion protein category. This makes sense- modifying virion proteins is one of the easier ways for phage to increase their infection efficiency over a long period of evolution. Viron proteins (like tail fibers) facilitate entry into E.coli, which is required for phage replication and survival. 
 
 ```{r}
 #Finding the number of mutations per functional category:
@@ -414,14 +410,13 @@ ggplot(high_f_mut_func, aes(x="",y=n,fill = gene_function))+ geom_bar(width = 1,
 ```
 
 #Comparing mutations by type
-Next we will get a breakdown of what kinds of mutations occured in our dataset. From the annotated mutation file, we get information on wheter the mutation was an indel, SNP or substitution. We also get details on the impact of these mutations (whether they are synonymous, non-synonymous, non-sense or intergenic).
+Next we will get a breakdown of what kinds of mutations occured in our dataset. From the annotated mutation file, we get information on whether the mutation was an indel, SNP or substitution. We also get details on the impact of these mutations (whether they are synonymous, non-synonymous, non-sense or intergenic).
+The purpose of this is twofold. First, it acts as a sanity check- most of the mutations reported should be SNP's, as these are much less likely to result in a dysfuctional bacteriophage. Second, this breakdown will give us a grasp on what kind of mutations are in the dataset, aiding downstream analysis.
 ```{r}
-#JAKE DO THIS!!
-
-#Getting the total number of mutations
 library(dplyr)
 library(ggplot2)
 
+#Getting the total number of mutations
 nrow(filtered_all_ann)
 #There are 190 mutations in total
 
@@ -434,8 +429,6 @@ p = ggplot(data=x, aes(x=Mutation_Type, y=Frequency, fill = Mutation_Type)) +
   theme_minimal()
 
 p
-
-#Breaking down the type of mutations by category: % of intergenic mutations, % of indel mutations, % of SNP mutations, % of xNP's
 
 #Looking at specifically the SNP mutations to find out how many are synonymous, and how many are non-synonymous, and how many are intergenic
 filtered_all_ann_noNonSNP <- filtered_all_ann[filtered_all_ann$type == 'SNP',]
@@ -451,7 +444,13 @@ p
 
 ```
 
-#Finding the number of mutations that are fixed and not fixed. @Jake can you give this a go?
+#Finding the number of mutations that are fixed and not fixed. 
+Next we will analyze the number of mutations that are fixed and not fixed. A fixed mutation will be defined at over 80% prevelance in the population - meaning these mutations were either essential, or associated with other essential mutations that gave the bacterophage a competitiva advantage while evolved. 
+Non-fixed mtuations will be defined as mutations with a population frequency from 5-80%. These mutations occured, but their consequences are not strong enough to either a) vanish entirely by being out competed or b) become fully ingrained in the population (fixed). 
+The pupose of doing this analysis is to see whether or not selection occured on the evolved populations. If selection occurs, we should see two things: 
+1) There should be a portion of mutations that become fixed in the population
+2) The mutations that do become fixed should be mostly non-synonymous, resulting in an amino acid change. It would make little sense if the fixed mutations were all silent synonymous mutations, because these should not exert evolutionary pressure. 
+As you can see in the graphs below, the majority of SNP mutations were non-synonymous, particulary in the  fixed mutation category. This indicates selection occurred during the experiment. These results are in line with the reported results from the paper. 
 ```{r}
 # trying to generate the stacked bar graph by variant as in the paper 
 library(ggplot2)
@@ -584,7 +583,7 @@ melted_mut_fcn_catdf <- melt(n_mut_per_fcn_cat_df)
 #Renaming the columns to something we can understand:
 melted_mut_fcn_catdf <- melted_mut_fcn_catdf %>% rename(functional_category = 1, mutation_rate = 2)
 
-#Now we need to add a third column delineating what population of bacteria the mutation rate occcured in. We can do this by making a dictionary, an matchin the row names from or n_mut_per_fcn_cat_df and then creating a vector out of this. We can then mutiply the vector to reach the lengthed of the melted dataframe. 
+#Now we need to add a third column delineating what population of bacteria the mutation rate occcured in. We can do this by making a dictionary, an matchin the row names from or n_mut_per_fcn_cat_df and then creating a vector out of this. We can then mutiply the vector to reach the length of the melted dataframe. 
 
 #Setting up a dictionary to make sample rownames to their bacteria populations
 b_pop_dict <- c("47_output" = 'Alternating C & K12', "48_output" = 'Alternating C & K12', "49_output" = 'Alternating C & K12', "50_output" ='Alternating C & K12', "51_output" = 'Alternating C & K12', "52_output"= 'E.coli K12', "53_output" = 'E.coli K12', "54_output" = 'E.coli K12', "55_output" ='E.coli C' , "56_output" ='E.coli C' , "57_output"= 'E.coli C', "58_output"= 'E.coli C' , "59_output"= 'E.coli C' , "60_output" = 'E.coli K12', "61_output" ='E.coli K12' )
@@ -603,6 +602,12 @@ melted_mut_fcn_catdf$bact_pop <- bact_pop #Adding the bacterial population to th
 
 scheirerRayHare(mutation_rate ~ functional_category + bact_pop, data = melted_mut_fcn_catdf)
   
+
+#We can also preform a Dunn's test to determine if one functional category in particular has a significant effect mutation rate. We will do the Dunn test on the viron_prots category
+#install.packages("dunn.test")
+print("Running a Dunn Test now")
+library(dunn.test)
+
   }
 ```
 
@@ -663,13 +668,17 @@ p + facet_grid(factor(population_name, level = c('E.coli C','E.coli K12','Altern
 
 ```
 
-
-
 #Conclusion:
 
-Overall we reached similar findings to the Pham et al. paper. We found that most of the mutations were dominated by structural genes. Further, these mutations were donminated by a few structural genes in particular.
+Overall we reached similar findings to the Pham et al. paper. We found that most of the mutations were dominated by structural genes. Further, these mutations were dominated by a few structural genes in particular.
 Our final genome mutation plot does not look identical to the one in Pham et al's paper. This is likely because we did not have access to the ancestral sample. When we initially filtered our mutations against those reported in their supplementary table, it's possible we lost some mutations. 
 
 and that the bacterial strain phage evolved in did not make a consistent different in the mutation profile. 
+
+```{r}
+attach(airquality)
+dunn.test(Ozone, Month, kw=FALSE, method="bonferroni")
+detach(airquality)
+```
 
 
