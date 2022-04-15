@@ -3,8 +3,8 @@ title: "final_project_markdown"
 author: "Eric Lyall and Jake Moersch"
 date: '2022-03-27'
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -13,18 +13,23 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introdution
 
-The paper we are reviewing is called "Experimental evolution for niche breadth in bacteriophage T4 highlights the importance of structural genes". It was the doctoral thesis for Jenny Pham at the Department of Organismic and Evolutionary Biology at Harvard University.. This paper anayzed the evolution of T4 bacteriophage, which is a lytic virus that infects E.coli.
+The paper we are reviewing is called "Experimental evolution for niche breadth in bacteriophage T4 highlights the importance of structural genes". It was the doctoral thesis for Jenny Pham at the Department of Organismic and Evolutionary Biology at Harvard University. This paper analyzed the evolution of T4 bacteriophage, which is a lytic virus that infects E.coli.
 The purpose of this paper was to gain a better understanding of "niche breadth evolution". Researchers wanted to understand how growing T4 bacteiophage in different niches (different E.coli strains) drives evolution. Specifically, this paper looked at what kind of genes were likely to mutate, and how the niche influence mutations. 
 
 Methods: The authors grew T4 bacteriophage (derived from a common ancestor) in 15 cultures of bacteria for approximately 50 generations. Each culture was passages daily. 5 of the bacteria cultures had E.coli C, 5 had E.coli K12, and 5 had alternating populations
-After 20 days, the author isolated phage population samples from each of the 15 populations and preformed whole genome sequencing on them with a coverage depth of 1000x. Then then compared the mutations from each of the samples. 
+After 20 days, the author isolated phage population samples from each of the 15 populations and preformed whole genome sequencing on them with a coverage depth of 1000x. They then compared the mutations from each of the samples. 
 
 The goals of our re-analysis are the following: 
+
 1) Preform mutation calling on all 15 samples
+
 2) Breakdown the types of mutations that occurred in this dataset, and see if they are similar to the author
-3) Look at the relative rates of mutations across 11 functional gene categories and niches (what strain the phage were evolved on). See if these results are similar to the author
+
+3) Look at the relative rates of mutations across 11 functional gene categories and niches (what strain the phage were evolved on). See if these results are similar to the author.
+
 4) Graphically compare mutations across different sample populations to look for similar mutation patterns
-We want to demonstrate that mutation in structural genes drive evolution of the bacteriophage. 
+
+We want to demonstrate that mutations in structural genes drive evolution of the bacteriophage. 
 
 We chose this analysis because it is very similar to what one team member (Eric Lyall) will have to for the Tropini Lab this summer. This analysis also makes use of a new mutation-calling tool called breseq, which neither of us have had previous exposure to. We are also completely unfamiliar working with microbial genomes, as we have only done human genomes in this course. 
 
@@ -757,7 +762,7 @@ Using the SRHanova function we created above, we can run an anova on three subse
 The paper did this same ANOVA to demonstrate that no matter the mutation type, 
 the functional category was most important in determining mutation rates. 
 Our anova results found significant p-values for functional categories (p ~ 0.00). The E.coli strain phage evolved in had no significant affect on the mutation rate. These results were consistent with all mutations, synonymous mutations, and non-synonymous mutations. 
-The Dunn test only found significnat difference in mutation rates in functional category pairs that contains viron proteins. The shows that viron proteins is the only category that has a relatively higher mutation rate. 
+The Dunn test only found significant differences in mutation rates in functional category pairs that contain viron proteins. The shows that viron proteins is the only category that has a relatively higher mutation rate. 
 ```{r}
 print("Running ANOVA on all mutations")
 SRHanova(filtered_all_ann,func_des_df) #no removals
@@ -828,23 +833,34 @@ p + facet_grid(factor(population_name, level = c('E.coli C','E.coli K12','Altern
 
 ```
 
-#Conclusion:
+# Conclusion: 
 
-Overall we reached similar findings to the Pham et al. paper. First, we demonstrated that selection did occur, and found strong evidence that multiple non-synonymous mutations occurred and persisted withint the population. 
-We found that most of the mutations were dominated by structural genes. We also concluded that the mutation rate in structural genes was the only category with significantly higher mutation rates. This result was the same as the study. Through our non-parametric ANOVA, we concluded that the bacteria phage evolved with (E.coliC, K12 or alternative populations) made no difference on the relative mutation rates in any functional category. This result also lined up with the paper. 
+
+Overall we reached similar findings to the Pham et al. paper. First, we demonstrated that selection did occur, and found strong evidence that multiple non-synonymous mutations occurred and persisted within the population. 
+We found that most of the mutations were dominated by structural genes. We also concluded that the mutation rate in structural genes was the only category with significantly higher mutation rates. This result was the same as the study. Through our non-parametric ANOVA, we concluded that the bacteria phage evolved with (E.coli C, K12 or alternative populations) made no difference on the relative mutation rates in any functional category. This result also lined up with the paper. 
 Our final genome mutation plot does not look identical to the one in Pham et al's paper. This is likely because we did not have access to the ancestral sample. When we initially filtered our mutations against those reported in their supplementary table, it's possible we lost some mutations. I noticed they changed some of the mutation positions by hand during there analysis, and this may have messed up our filtering. This isn't a huge worry, as with the ancestral sequence and proper filtering we would probably get the same results.  
 Below is a plot of the mutations found by the paper for comparison. One can see we have somewhat similar results, but there's a few points missing & a few extra ones. The extra ones may come from mutations that were actually in the ancestral sequence, but had a matching position to the mutations reported in the paper's supplementary table, so never got filtered out.
 
-![Adapters to get rid of](paper_genome_fig.png)
+![Adapters to get rid of](paper_genome_fig.png)  
+
+
+
+
+
+Next time I would do the analysis very similarly, but with a functioning ancestral sequence so that ancestral mutations can be filtered out using breseq's tools. I would also try to visualize some of the mutations on the protein PBD structures themselves. 
+
 
 References: 
-The paper we followed:
+
+The paper we followed: 
+
+
 Pham, Jenny Y., C. Brandon Ogbunugafor, Alex N. Nguyen Ba, and Daniel L. Hartl. “Experimental Evolution for Niche Breadth in Bacteriophage T4 Highlights the Importance of Structural Genes.” MicrobiologyOpen 9, no. 2 (2020): e968. https://doi.org/10.1002/mbo3.968.
 
-The paper that give the T4 genome, genes and functional designations:
+The paper that give the T4 genome, genes and functional designations: 
+
 Miller, Eric S., Elizabeth Kutter, Gisela Mosig, Fumio Arisaka, Takashi Kunisawa, and Wolfgang Rüger. “Bacteriophage T4 Genome.” Microbiology and Molecular Biology Reviews 67, no. 1 (March 2003): 86–156. https://doi.org/10.1128/MMBR.67.1.86-156.2003.
 
 
 
-Next time I would do the analysis very similarly, but with a functioning ancestral sequence so that ancestral mutations can be filtered out using breseq's tools. I would also try to visualize some of the mutations on the protein PBD structures themselves.
 
