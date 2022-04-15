@@ -2,7 +2,9 @@
 title: "final_project_markdown"
 author: "Eric Lyall"
 date: '2022-03-27'
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -452,10 +454,10 @@ The pupose of doing this analysis is to see whether or not selection occured on 
 2) The mutations that do become fixed should be mostly non-synonymous, resulting in an amino acid change. It would make little sense if the fixed mutations were all silent synonymous mutations, because these should not exert evolutionary pressure. 
 As you can see in the graphs below, the majority of SNP mutations were non-synonymous, particulary in the  fixed mutation category. This indicates selection occurred during the experiment. These results are in line with the reported results from the paper. 
 ```{r}
-# trying to generate the stacked bar graph by variant as in the paper 
+# trying to generate some graphs by fixed/non-fixed status, as in the paper
 library(ggplot2)
 library(dplyr)
-# add bact populations
+# add bacterial population labels
 b_pop_dict <- c("47_output" = 'Alternating C & K12', "48_output" = 'Alternating C & K12', "49_output" = 'Alternating C & K12', "50_output" ='Alternating C & K12', "51_output" = 'Alternating C & K12', "52_output"= 'E.coli K12', "53_output" = 'E.coli K12', "54_output" = 'E.coli K12', "55_output" ='E.coli C' , "56_output" ='E.coli C' , "57_output"= 'E.coli C', "58_output"= 'E.coli C' , "59_output"= 'E.coli C' , "60_output" = 'E.coli K12', "61_output" ='E.coli K12' )
 population_y_axis_vals <- c()
 output_names <- filtered_all_ann$title
@@ -466,22 +468,18 @@ for(output_name in output_names){
 filtered_all_ann$population_name <- population_y_axis_vals #Adding this to our mutation dataframe
 
 summary_stat = filtered_all_ann%>% select(population_name,mutation_category,frequency)
-#ggplot(summary_stat,aes(fill=mutation_category, ))
-#summary_counts = 
-
-fixed <- summary_stat %>% filter(frequency > .8)
+#making summary tables
+fixed <- summary_stat %>% filter(frequency > 0.8)
 fixed_summary <- fixed %>% group_by(mutation_category,population_name) %>% summarise(n=n()) %>% arrange(desc(n))
 
 observed <- summary_stat %>% filter(frequency < 0.8)
 observed_summary <- observed %>% group_by(mutation_category,population_name) %>% summarise(n=n()) %>% arrange(desc(n))
 
-
+#plotting
 p = ggplot(fixed_summary, aes(x="",y = n, fill = mutation_category)) + geom_bar(width = 1, stat = "identity") + ylab("Number of mutations") + xlab("Mutations greater than 80% frequency")
-#p + facet_grid(factor(~.population_name, level = c('E.coli C','E.coli K12','Alternating C & K12'))) 
 p + facet_grid(cols = vars(population_name))
 
 p = ggplot(observed_summary, aes(x="",y = n, fill = mutation_category)) + geom_bar(width = 1, stat = "identity") + ylab("Number of mutations") + xlab("Mutations between 5% and 80% frequency")
-#p + facet_grid(factor(~.population_name, level = c('E.coli C','E.coli K12','Alternating C & K12'))) 
 p + facet_grid(cols = vars(population_name))
 
 
@@ -637,8 +635,6 @@ Our last task will be to graph the mutations for each sample across then entire 
 
 #install.packages("ggpubr")
 library(ggpubr)
-ggpubr::show_point_shapes()
-
 
 #First we will make a dictionary with y-axis values for each of the sample names: 
 y_axis_dict <- c("47_output" = 5, "48_output" = 4, "49_output" = 3, "50_output" =2, "51_output" = 1, "52_output"= 5, "53_output" = 4, "54_output" = 3, "55_output" =5 , "56_output" =4 , "57_output"= 3, "58_output"= 2, "59_output"= 1, "60_output" = 2, "61_output" =1 )
@@ -652,7 +648,7 @@ for(output_name in output_names){
 }
 filtered_all_ann$y_ax_val <- mutation_y_axis_vals #Adding this to our mutation dataframe
 
-# doing the same thing for bacterial populations
+# doing the same thing for bacterial population names
 b_pop_dict <- c("47_output" = 'Alternating C & K12', "48_output" = 'Alternating C & K12', "49_output" = 'Alternating C & K12', "50_output" ='Alternating C & K12', "51_output" = 'Alternating C & K12', "52_output"= 'E.coli K12', "53_output" = 'E.coli K12', "54_output" = 'E.coli K12', "55_output" ='E.coli C' , "56_output" ='E.coli C' , "57_output"= 'E.coli C', "58_output"= 'E.coli C' , "59_output"= 'E.coli C' , "60_output" = 'E.coli K12', "61_output" ='E.coli K12' )
 
 population_y_axis_vals <- c()
@@ -666,22 +662,26 @@ filtered_all_ann$population_name <- population_y_axis_vals #Adding this to our m
 
 #Now we will attempt to maake a scatterplot with all the mutations: 
 library(ggplot2)
-p = ggplot(filtered_all_ann, aes(x=position,y = reorder(y_ax_val, desc(y_ax_val)), shape = mutation_category, color = gene_function)) + geom_point(aes(fill = gene_function)) + scale_shape_manual(values = c(21,5,24,22,2,4))
-p + facet_grid(factor(population_name, level = c('E.coli C','E.coli K12','Alternating C & K12'))~.) 
+p = ggplot(filtered_all_ann, aes(x=position,y = reorder(y_ax_val, desc(y_ax_val)), shape = mutation_category, color = gene_function)) + geom_point(aes(fill = gene_function)) + scale_shape_manual(values = c(21,5,24,22,2,4)) + ylab("sample number") + xlab("location on genomic sequence (bp)")
+p + facet_grid(factor(population_name, level = c('E.coli C','E.coli K12','Alternating C & K12'))~.)
 
 ```
 
 #Conclusion:
 
-Overall we reached similar findings to the Pham et al. paper. We found that most of the mutations were dominated by structural genes. Further, these mutations were dominated by a few structural genes in particular.
-Our final genome mutation plot does not look identical to the one in Pham et al's paper. This is likely because we did not have access to the ancestral sample. When we initially filtered our mutations against those reported in their supplementary table, it's possible we lost some mutations. 
+Overall we reached similar findings to the Pham et al. paper. First, we demonstrated that selection did occure, and found strong evidence that multiple non-synonymous mutations occurred and persisted withint the population. 
+We found that most of the mutations were dominated by structural genes. We also concluded that the mutation rate in structural genes was the only category with significantly higher mutation rates. This result was the same as the study. Through our non-parametric ANOVA, we concluded that the bacteria phage evolved with (E.coliC, K12 or alternative populations) made no difference on the relative mutation rates in any functional category. This result also lined up with the paper. 
+Our final genome mutation plot does not look identical to the one in Pham et al's paper. This is likely because we did not have access to the ancestral sample. When we initially filtered our mutations against those reported in their supplementary table, it's possible we lost some mutations. I noticed they changed some of the mutation positions by hand during there analysis, and this may have messed up our filtering. This isn't a huge worry, as with the ancestral sequence and proper filtering we would probably get the same results.  
+Below is a plot of the mutations found by the paper for comparison. One can see we have somewhat similar results, but there's a few points missing & a few extra ones. The extra ones may come from mutations that werw actually in the ancestral sequence, but had a matching position to the mutations reported in the paper's supplementary table, so never got filtered out.
 
-and that the bacterial strain phage evolved in did not make a consistent different in the mutation profile. 
+References: 
+The paper we followed:
+Pham, Jenny Y., C. Brandon Ogbunugafor, Alex N. Nguyen Ba, and Daniel L. Hartl. “Experimental Evolution for Niche Breadth in Bacteriophage T4 Highlights the Importance of Structural Genes.” MicrobiologyOpen 9, no. 2 (2020): e968. https://doi.org/10.1002/mbo3.968.
 
-```{r}
-attach(airquality)
-dunn.test(Ozone, Month, kw=FALSE, method="bonferroni")
-detach(airquality)
-```
+The paper that give the T4 genome, genes and functional designations:
+Miller, Eric S., Elizabeth Kutter, Gisela Mosig, Fumio Arisaka, Takashi Kunisawa, and Wolfgang Rüger. “Bacteriophage T4 Genome.” Microbiology and Molecular Biology Reviews 67, no. 1 (March 2003): 86–156. https://doi.org/10.1128/MMBR.67.1.86-156.2003.
 
+
+
+Next time I would do the analysis very similarly, but with a functioning ancestral sequence so that ancestral mutations can be filtered out using breseq's tools. I would also try to visualize some of the mutations on the protein PBD structures themselves.
 
