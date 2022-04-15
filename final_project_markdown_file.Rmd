@@ -633,7 +633,7 @@ ggpubr::show_point_shapes()
 
 
 #First we will make a dictionary with y-axis values for each of the sample names: 
-y_axis_dict <- c("47_output" = 1, "48_output" = 2, "49_output" = 3, "50_output" =4, "51_output" = 5, "52_output"= 1, "53_output" = 2, "54_output" = 3, "55_output" =4 , "56_output" =5 , "57_output"= 1, "58_output"= 2, "59_output"= 3, "60_output" = 4, "61_output" =5 )
+y_axis_dict <- c("47_output" = 5, "48_output" = 4, "49_output" = 3, "50_output" =2, "51_output" = 1, "52_output"= 5, "53_output" = 4, "54_output" = 3, "55_output" =5 , "56_output" =4 , "57_output"= 3, "58_output"= 2, "59_output"= 1, "60_output" = 2, "61_output" =1 )
 
 #Now we are going to add a new column to the "filtered_all_ann" dataframe which contains the y-axis value corresponding to each sample name. 
 mutation_y_axis_vals <- c()
